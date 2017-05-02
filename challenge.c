@@ -23,6 +23,8 @@ Result init_challenge(Challenge *challenge, int id, char *name, Level level){
     }
     challenge->id = id;
     challenge->level = level;
+    challenge->best_time=0;
+    challenge->num_visits=0;
     return OK;
 }
 
@@ -34,7 +36,6 @@ Result reset_challenge(Challenge *challenge){
     challenge->name=NULL;
     challenge->best_time=0;
     challenge->num_visits=0;
-
     return OK;
 }
 
