@@ -37,7 +37,7 @@ typedef struct SChallengeRoom
     int num_of_challenges;
     ChallengeActivity *challenges;
 } ChallengeRoom;
-
+Challenge
 
 Result init_challenge_activity(ChallengeActivity *activity, Challenge *challenge);
 

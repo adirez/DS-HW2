@@ -12,7 +12,9 @@
 #include "visitor_room.h"
 
 /*
- * initialize the challenge activity for first use
+ * initializes a challenge activity. receives the challenge as an input and
+ * update it in a received activity.
+ * visitor and start_time are set to 0.
  */
 Result init_challenge_activity(ChallengeActivity *activity,
                                Challenge *challenge) {
@@ -26,7 +28,7 @@ Result init_challenge_activity(ChallengeActivity *activity,
 }
 
 /*
- * resets the challenge activity
+ * resets all the fields of a received activity.
  */
 Result reset_challenge_activity(ChallengeActivity *activity) {
     if (activity == NULL) {
@@ -39,7 +41,9 @@ Result reset_challenge_activity(ChallengeActivity *activity) {
 }
 
 /*
- * initialize a visitor type for the first time
+ * initializes a visitor. receives a name and an id and insert it into the
+ * relevant fields of a received visitor.
+ * room_name and current_challenge are by default set to NULL.
  */
 Result init_visitor(Visitor *visitor, char *name, int id) {
     if (visitor == NULL || name == NULL) {
@@ -59,22 +63,24 @@ Result init_visitor(Visitor *visitor, char *name, int id) {
 }
 
 /*
- * Resets an existing visitor
+ * resets all the fields of a given visitor and frees the allocated memory.
  */
 Result reset_visitor(Visitor *visitor) {
     if (visitor == NULL) {
         return NULL_PARAMETER;
     }
+    //visitor_name is allocated in initialization and needs to be freed.
+    free(visitor->visitor_name);
     visitor->visitor_name = NULL;
-    visitor->visitor_id = 0;
-    visitor->current_challenge = NULL;
     visitor->room_name = NULL;
+    visitor->current_challenge = NULL;
+    visitor->visitor_id = 0;
     return OK;
 }
 
 /*
- * initialize room type and allocates memory according to the num of
- * challenges required
+ * initializes a room. receives a name and the number of challenges and update
+ * in the relevant fields of a given room. allocates memory for the name.
  */
 Result init_room(ChallengeRoom *room, char *name, int num_challenges) {
     if (room == NULL || name == NULL) {
@@ -100,6 +106,27 @@ Result init_room(ChallengeRoom *room, char *name, int num_challenges) {
     return OK;
 }
 
+/*
+ * resets all the fields of a given room and frees the allocated memory.
+ */
+Result reset_room(ChallengeRoom *room) {
+    if (room == NULL) {
+        return NULL_PARAMETER;
+    }
+    //room->name is allocated in initialization and needs to be freed.
+    free (room->name);
+    room->name = NULL;
+    room->num_of_challenges = 0;
+    room->challenges = NULL;
+    return OK;
+}
+
+/*
+ * receives a room and a level and updates 'places' to the number of free places for the asked level.
+ */
+Result num_of_free_places_for_level(ChallengeRoom *room, Level level, int *places) {
+
+}
 Result reset_room(ChallengeRoom *room) {
 
 }
