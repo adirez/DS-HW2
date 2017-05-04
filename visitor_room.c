@@ -67,14 +67,14 @@ Result init_room(ChallengeRoom *room, char *name, int num_challenges) {
         return ILLEGAL_PARAMETER;
     }
     room->name = malloc(strlen(name) * 1 + 1);
-    if (room == NULL) {
+    if (room->name == NULL) {
         return MEMORY_PROBLEM;
     }
     strcpy(room->name, name);
     room->num_of_challenges = num_challenges;
 }
-Result reset_room(ChallengeRoom *room);
 
+Result reset_room(ChallengeRoom *room);
 Result num_of_free_places_for_level(ChallengeRoom *room, Level level, int *places);
 
 Result change_room_name(ChallengeRoom *room, char *new_name);
