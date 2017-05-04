@@ -14,13 +14,11 @@ Result init_challenge(Challenge *challenge, int id, char *name, Level level) {
     if (challenge == NULL || name == NULL) {
         return NULL_PARAMETER;
     }
-    challenge->name = malloc(strlen(name) * sizeof(char));
+    challenge->name = malloc(strlen(name) * 1 + 1);
     if (challenge->name == NULL) {
         return MEMORY_PROBLEM;
     }
-    for (int i = 0; i < strlen(name); ++i) {
-        challenge->name[i] = name[i];
-    }
+    strcpy(challenge->name, name);
     challenge->id = id;
     challenge->level = level;
     challenge->best_time = 0;
@@ -45,14 +43,12 @@ Result change_name(Challenge *challenge, char *name) {
     if (challenge == NULL || name == NULL) {
         return NULL_PARAMETER;
     }
-    char *newName = realloc(challenge->name, strlen(name) * sizeof(char));
+    char *newName = realloc(challenge->name, strlen(name) * 1 + 1);
     if (newName == NULL) {
         return MEMORY_PROBLEM;
     }
     challenge->name = newName;
-    for (int i = 0; i < strlen(name); ++i) {
-        challenge->name[i] = name[i];
-    }
+    strcpy(challenge->name, name);
     return OK;
 }
 
