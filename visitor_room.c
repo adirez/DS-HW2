@@ -116,8 +116,10 @@ Result reset_room(ChallengeRoom *room) {
     //room->name is allocated in initialization and needs to be freed.
     free(room->name);
     room->name = NULL;
-    room->num_of_challenges = 0;
+    //likewise
+    free(room->challenges);
     room->challenges = NULL;
+    room->num_of_challenges = 0;
     return OK;
 }
 
@@ -127,7 +129,20 @@ Result reset_room(ChallengeRoom *room) {
  */
 Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
                                     int *places) {
+    if(room == NULL){
+        return NULL_PARAMETER;
+    }
+    int count = 0;
 
+    //loops through all the challenge activities in the room and checks if
+    // the level given by the user equals to the challenge's level
+    for (int room_num = 0; room_num < room->num_of_challenges; ++room_num) {
+        if(room->challenges[room_num].challenge->level == level){
+            count++;
+        }
+    }
+    *places = count;
+    return OK;
 }
 
 Result reset_room(ChallengeRoom *room) {
