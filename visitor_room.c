@@ -167,6 +167,20 @@ Result room_of_visitor(Visitor *visitor, char **room_name) {
         return NULL_PARAMETER;
     }
 
+    //checks if the visitor is in a challenge at all
+    if (visitor->current_challenge == NULL) {
+        return NOT_IN_ROOM;
+    }
+
+    //allocates memory for the name of the challenge in the room_name param
+    *room_name = malloc(strlen(visitor->current_challenge->challenge->name));
+    if (*room_name == NULL) {
+        return MEMORY_PROBLEM;
+    }
+    //copies the name to itself
+    strcpy(*room_name, visitor->current_challenge->challenge->name);
+
+    return OK;
 }
 
 Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
