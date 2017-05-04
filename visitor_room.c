@@ -145,17 +145,19 @@ Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
     return OK;
 }
 
-Result reset_room(ChallengeRoom *room) {
-
-}
-
-Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
-                                    int *places) {
-
-}
-
+/*
+ * changes the name of a given room
+ */
 Result change_room_name(ChallengeRoom *room, char *new_name) {
-
+    if (room == NULL || new_name == NULL) {
+        return NULL_PARAMETER;
+    }
+    //reallocating in a temp variable in case the allocation fails
+    char *temp_name = realloc(room->name, strlen(new_name));
+    if (temp_name == NULL) {
+        return MEMORY_PROBLEM;
+    }
+    strcpy(room->name, temp_name);
 }
 
 Result room_of_visitor(Visitor *visitor, char **room_name) {
