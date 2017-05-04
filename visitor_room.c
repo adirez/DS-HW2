@@ -129,15 +129,16 @@ Result reset_room(ChallengeRoom *room) {
  */
 Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
                                     int *places) {
-    if(room == NULL){
+    if (room == NULL) {
         return NULL_PARAMETER;
     }
     int count = 0;
 
-    //loops through all the challenge activities in the room and checks if
-    // the level given by the user equals to the challenge's level
-    for (int room_num = 0; room_num < room->num_of_challenges; ++room_num) {
-        if(room->challenges[room_num].challenge->level == level){
+    //loops through all the challenge activities in the room and compares each
+    //challenge's level to the given level from the user
+    for (int challenge_idx = 0; challenge_idx < room->num_of_challenges;
+         ++challenge_idx) {
+        if (room->challenges[challenge_idx].challenge->level == level) {
             count++;
         }
     }
@@ -145,20 +146,26 @@ Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
     return OK;
 }
 
-Result reset_room(ChallengeRoom *room) {
-
-}
-
-Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
-                                    int *places) {
-
-}
-
 Result change_room_name(ChallengeRoom *room, char *new_name) {
+    if (room == NULL || new_name == NULL) {
+        return NULL_PARAMETER;
+    }
 
+    //to make sure that we won't lose data if realloc fails
+    char *name_ptr = realloc(room->name, strlen(new_name) + 1);
+    if (name_ptr == NULL) {
+        return MEMORY_PROBLEM;
+    }
+    room->name = name_ptr;
+    strcpy(room->name, new_name);
+
+    return OK;
 }
 
 Result room_of_visitor(Visitor *visitor, char **room_name) {
+    if (visitor == NULL || room_name == NULL) {
+        return NULL_PARAMETER;
+    }
 
 }
 
