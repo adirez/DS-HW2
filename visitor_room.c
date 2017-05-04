@@ -138,14 +138,19 @@ Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
     //challenge's level to the given level from the user
     for (int challenge_idx = 0; challenge_idx < room->num_of_challenges;
          ++challenge_idx) {
-        if (room->challenges[challenge_idx].challenge->level == level) {
+
+        //checking that the level is suitable and that the room is empty
+        if (room->challenges[challenge_idx].challenge->level == level
+            && room->challenges[challenge_idx].visitor == NULL) {
             count++;
         }
     }
     *places = count;
     return OK;
 }
-
+/*
+ * changes the name of the chosen room to the received name
+ */
 Result change_room_name(ChallengeRoom *room, char *new_name) {
     if (room == NULL || new_name == NULL) {
         return NULL_PARAMETER;
