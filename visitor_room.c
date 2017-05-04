@@ -114,7 +114,7 @@ Result reset_room(ChallengeRoom *room) {
         return NULL_PARAMETER;
     }
     //room->name is allocated in initialization and needs to be freed.
-    free (room->name);
+    free(room->name);
     room->name = NULL;
     room->num_of_challenges = 0;
     room->challenges = NULL;
@@ -122,11 +122,14 @@ Result reset_room(ChallengeRoom *room) {
 }
 
 /*
- * receives a room and a level and updates 'places' to the number of free places for the asked level.
+ * receives a room and a level and updates 'places' to the number of free places
+ * for the asked level.
  */
-Result num_of_free_places_for_level(ChallengeRoom *room, Level level, int *places) {
+Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
+                                    int *places) {
 
 }
+
 Result reset_room(ChallengeRoom *room) {
 
 }
