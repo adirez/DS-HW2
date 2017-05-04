@@ -30,6 +30,7 @@ Result init_challenge(Challenge *challenge, int id, char *name, Level level) {
     challenge->num_visits = 0;
     return OK;
 }
+
 /*
  * resets all the params of challenge
  */
@@ -45,6 +46,7 @@ Result reset_challenge(Challenge *challenge) {
     challenge->num_visits = 0;
     return OK;
 }
+
 /*
  * changes the name of the challenge
  */
@@ -53,15 +55,15 @@ Result change_name(Challenge *challenge, char *name) {
         return NULL_PARAMETER;
     }
     //to make sure that we won't lose data if realloc fails
-    char *newName = realloc(challenge->name, strlen(name) + 1);
-    if (newName == NULL) {
+    char *name_ptr = realloc(challenge->name, strlen(name) + 1);
+    if (name_ptr == NULL) {
         return MEMORY_PROBLEM;
     }
-    challenge->name = newName;
-    free(newName); //TODO: what do you think? is it needed?
+    challenge->name = name_ptr;
     strcpy(challenge->name, name);
     return OK;
 }
+
 /*
  * sets the best time to be the time given by the user
  */
@@ -82,6 +84,7 @@ Result set_best_time_of_challenge(Challenge *challenge, int time) {
     challenge->best_time = time;
     return OK;
 }
+
 /*
  * returns the best time through ptr
  */
@@ -92,6 +95,7 @@ Result best_time_of_challenge(Challenge *challenge, int *time) {
     *time = challenge->best_time;
     return OK;
 }
+
 /*
  * increases the num of visits by 1
  */
@@ -102,6 +106,7 @@ Result inc_num_visits(Challenge *challenge) {
     challenge->num_visits = challenge->num_visits + 1;
     return OK;
 }
+
 /*
  * returns the num of visits through ptr
  */
