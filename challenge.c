@@ -18,7 +18,7 @@ Result init_challenge(Challenge *challenge, int id, char *name, Level level) {
         return NULL_PARAMETER;
     }
     //allocates new memory for the name and copies it
-    challenge->name = malloc(strlen(name) * 1 + 1);
+    challenge->name = malloc(strlen(name) + 1);
     if (challenge->name == NULL) {
         return MEMORY_PROBLEM;
     }
@@ -40,7 +40,7 @@ Result reset_challenge(Challenge *challenge) {
     free(challenge->name);
     challenge->id = 0;
     challenge->name = NULL;
-    challenge->level = 0;
+    challenge->level = Easy;
     challenge->best_time = 0;
     challenge->num_visits = 0;
     return OK;
@@ -53,11 +53,12 @@ Result change_name(Challenge *challenge, char *name) {
         return NULL_PARAMETER;
     }
     //to make sure that we won't lose data if realloc fails
-    char *newName = realloc(challenge->name, strlen(name) * 1 + 1);
+    char *newName = realloc(challenge->name, strlen(name) + 1);
     if (newName == NULL) {
         return MEMORY_PROBLEM;
     }
     challenge->name = newName;
+    free(newName); //TODO: what do you think? is it needed?
     strcpy(challenge->name, name);
     return OK;
 }
