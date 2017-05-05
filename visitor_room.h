@@ -1,7 +1,3 @@
-//
-// Created by adire on 02-May-17.
-//
-
 #ifndef VISITOR_ROOM_H_
 #define VISITOR_ROOM_H_
 
@@ -37,7 +33,7 @@ typedef struct SChallengeRoom
     int num_of_challenges;
     ChallengeActivity *challenges;
 } ChallengeRoom;
-Challenge
+
 
 Result init_challenge_activity(ChallengeActivity *activity, Challenge *challenge);
 

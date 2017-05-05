@@ -16,7 +16,7 @@
 
 int main(int argc, char **argv)
 {
-
+/*
     ChallengeRoomSystem *sys=NULL;
     Result r=OK;
 
@@ -86,6 +86,6 @@ int main(int argc, char **argv)
     free(most_popular_challenge);
 
     free(challenge_best_time);
-
+*/
     return 0;
 }
