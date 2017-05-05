@@ -257,15 +257,29 @@ Result visitor_quit_room(Visitor *visitor, int quit_time) {
     if (visitor->room_name == NULL) {
         return NOT_IN_ROOM;
     }
-    //calculates the total time that took the visitor to finish the challenge
-    int visitor_total_time = quit_time -
-                             (visitor->current_challenge->start_time);
-    //update the best time in the Challenge
-    set_best_time_of_challenge(visitor->current_challenge->challenge,
-                               visitor_total_time);
-    //update Visitor current_challenge Challenge_Activity
-    free(visitor->current_challenge->visitor);
 
+    //calculates the total time that took the visitor to finish the challenge
+    int visitor_total_time = quit_time - (visitor->current_challenge->start_time);
+
+    //checking if visitor's time is better than the challenge's best time
+    if (visitor_total_time >= 0 && visitor->current_challenge->challenge->best_time) {
+        Result res = set_best_time_of_challenge(visitor->current_challenge->challenge,
+                                   visitor_total_time);
+        //checking that set_best_time_of_challenge worked OK
+        if (res != OK) {
+            return res;
+        }
+    }
+
+    //reseting all the challenge-related fields of visitor
+    visitor->current_challenge->visitor = NULL;
+    visitor->current_challenge->start_time = 0;
+
+    //releasing allocated memory for the room name at visitor and reseting relevant fields
+    free(*(visitor->room_name));
+    *(visitor->room_name) = NULL;
+    visitor->room_name = NULL;
+    visitor->current_challenge = NULL;
 }
 
 
