@@ -246,6 +246,10 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
             room->challenges[challenge_idx].start_time = start_time;
             //connecting the ChallengeActivity to the Visitor
             visitor->current_challenge = &(room->challenges[challenge_idx]);
+            //increase the num of visits for the Challenge
+            if (inc_num_visits(visitor->current_challenge->challenge) == NULL_PARAMETER) {
+                return NULL_PARAMETER;
+            }
             return OK;
         }
     }
@@ -253,8 +257,8 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
     //were no available challenges
     return NO_AVAILABLE_CHALLENGES;
 }
+//TODO make sure it's ok to check the return value of inc_num_visits ^
 
-//TODO make sure if the inc_num_visits needs to be done when enter ot quit
 Result visitor_quit_room(Visitor *visitor, int quit_time) {
     if (visitor == NULL) {
         return NULL_PARAMETER;
@@ -266,12 +270,11 @@ Result visitor_quit_room(Visitor *visitor, int quit_time) {
     int visitor_total_time = quit_time -
                              (visitor->current_challenge->start_time);
     //update the best time in the Challenge
-    if(set_best_time_of_challenge(visitor->current_challenge->challenge,
-                               visitor_total_time) == NULL_PARAMETER){
+    if (set_best_time_of_challenge(visitor->current_challenge->challenge,
+                                   visitor_total_time) == NULL_PARAMETER) {
         return NULL_PARAMETER;
     }
-    //increase the num of visits for the Challenge
-    inc_num_visits(visitor->current_challenge->challenge);
+
     //update Visitor params and free allocated memory
     free(*(visitor->room_name));
     *(visitor->room_name) = NULL;
