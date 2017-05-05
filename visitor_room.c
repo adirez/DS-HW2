@@ -132,6 +132,11 @@ Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
     if (room == NULL) {
         return NULL_PARAMETER;
     }
+    //if the level is All_Levels just return the num of challenges in the room
+    if (level == All_Levels) {
+        *places = room->num_of_challenges;
+        return OK;
+    }
     int count = 0;
 
     //loops through all the challenge activities in the room and compares each
@@ -148,6 +153,7 @@ Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
     *places = count;
     return OK;
 }
+
 /*
  * changes the name of the chosen room to the received name
  */
@@ -163,38 +169,80 @@ Result change_room_name(ChallengeRoom *room, char *new_name) {
     }
     room->name = name_ptr;
     strcpy(room->name, new_name);
-
     return OK;
 }
 
+//TODO check the function again after system type
 Result room_of_visitor(Visitor *visitor, char **room_name) {
-    if (visitor == NULL || room_name == NULL) {
+    if (room_name == NULL) {
         return NULL_PARAMETER;
     }
-
-    //checks if the visitor is in a challenge at all
-    if (visitor->current_challenge == NULL) {
+    //in case the visitor is not found or he's no in one of the rooms
+    if (visitor == NULL || *(visitor->room_name) == NULL) {
         return NOT_IN_ROOM;
     }
-
-    //allocates memory for the name of the challenge in the room_name param
-    *room_name = malloc(strlen(visitor->current_challenge->challenge->name));
+    *room_name = malloc(strlen(*(visitor->room_name)) + 1);
     if (*room_name == NULL) {
         return MEMORY_PROBLEM;
     }
-    //copies the name to itself
-    strcpy(*room_name, visitor->current_challenge->challenge->name);
-
+    strcpy(*room_name, *(visitor->room_name));
     return OK;
 }
 
-Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
-                          int start_time) {
+static int lexCmp(const void *p1, const void *p2) {
+    char *s1 = (char *) p1;
+    char *s2 = (char *) p2;
 
+    return strcmp(s1, s2);
 }
 
-/* the challenge to be chosen is the lexicographically named smaller one that has
-   the required level. assume all names are different. */
+/*
+ * the challenge to be chosen is the lexicographically named smaller one that
+ * has the required level. assume all names are different.
+ */
+Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
+                          int start_time) {
+    if (room == NULL || visitor == NULL) {
+        return NULL_PARAMETER;
+    }
+    if (visitor->room_name != NULL) {
+        return ALREADY_IN_ROOM;
+    }
+    //sorts the challenges in the room lexicographically
+    qsort(room->challenges, (size_t) room->num_of_challenges, sizeof
+            (ChallengeActivity), lexCmp);
+
+    //loops through all the challenge activities in the room and compares each
+    //challenge's level to the wanted level from the user
+    for (int challenge_idx = 0;
+         challenge_idx < room->num_of_challenges; ++challenge_idx) {
+
+        //if there's a match with the levels or the wanted level is
+        //'All_Levels' than only if the challenge has no visitor already,
+        //the visitor is going inside the room and all the params are
+        //changed accordingly
+
+        if ((level == room->challenges[challenge_idx].challenge->level ||
+             level == All_Levels) && room->challenges[challenge_idx]
+                                             .visitor == NULL) {
+
+            *(visitor->room_name) = malloc(strlen(room->challenges->challenge[0]
+                                                          .name));
+            if (*(visitor->room_name) == NULL) {
+                return MEMORY_PROBLEM;
+            }
+            strcpy(*(visitor->room_name), room->challenges->challenge[0].name);
+            visitor->current_challenge->challenge = room->challenges->challenge;
+            visitor->current_challenge->visitor = visitor;
+            visitor->current_challenge->start_time = start_time;
+            return OK;
+        }
+    }
+    //if the for loops ends without returning already it means that there
+    // were no available challenges
+    return NO_AVAILABLE_CHALLENGES;
+}
+
 
 Result visitor_quit_room(Visitor *visitor, int quit_time) {
 
