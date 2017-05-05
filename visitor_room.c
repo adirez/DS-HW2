@@ -244,6 +244,7 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
             return OK;
         }
     }
+
     //if the for loop ends without exiting the function it means that there
     //were no available challenges
     return NO_AVAILABLE_CHALLENGES;
