@@ -120,8 +120,15 @@ Result reset_room(ChallengeRoom *room) {
     }
     //room->name is allocated in initialization and needs to be freed.
     free(room->name);
-    //likewise to room->challenges
+    room->name = NULL;
+    //loops through all the challenge activities in the room and resets them
+    for (int challenge_idx = 0;
+         challenge_idx < room->num_of_challenges; ++challenge_idx) {
+
+        reset_challenge_activity(&(room->challenges[challenge_idx]));
+    }
     free(room->challenges);
+    room->challenges = NULL;
     room->num_of_challenges = 0;
     return OK;
 }
@@ -140,8 +147,8 @@ Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
         *places = room->num_of_challenges;
         return OK;
     }
-    int count = 0;
 
+    int count = 0;
     //loops through all the challenge activities in the room and compares each
     //challenge's level to the given level from the user
     for (int challenge_idx = 0; challenge_idx < room->num_of_challenges;
@@ -229,7 +236,7 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
              level == All_Levels) && room->challenges[challenge_idx]
                                              .visitor == NULL) {
             //update the Visitor's room name
-            *(visitor->room_name) = malloc(strlen(room->name));
+            *(visitor->room_name) = malloc(strlen(room->name) + 1);
             if (*(visitor->room_name) == NULL) {
                 return MEMORY_PROBLEM;
             }
@@ -238,9 +245,7 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
             room->challenges[challenge_idx].visitor = visitor;
             room->challenges[challenge_idx].start_time = start_time;
             //connecting the ChallengeActivity to the Visitor
-            *(visitor->current_challenge) = room->challenges[challenge_idx];
-            //increase the num of visits for the Challenge
-            inc_num_visits(room->challenges[challenge_idx].challenge);
+            visitor->current_challenge = &(room->challenges[challenge_idx]);
             return OK;
         }
     }
@@ -263,16 +268,13 @@ Result visitor_quit_room(Visitor *visitor, int quit_time) {
     //update the best time in the Challenge
     set_best_time_of_challenge(visitor->current_challenge->challenge,
                                visitor_total_time);
-    //update Visitor current_challenge Challenge_Activity
-    free(visitor->current_challenge->visitor);
-
+    //increase the num of visits for the Challenge
+    inc_num_visits(visitor->current_challenge->challenge);
+    //update Visitor params and free allocated memory
+    free(*(visitor->room_name));
+    visitor->room_name = NULL;
+    visitor->current_challenge->visitor = NULL;
+    visitor->current_challenge->start_time = 0;
+    visitor->current_challenge = NULL;
+    return OK;
 }
-
-
-
-
-
-
-
-
-
