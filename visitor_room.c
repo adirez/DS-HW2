@@ -254,7 +254,7 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
     return NO_AVAILABLE_CHALLENGES;
 }
 
-
+//TODO make sure if the inc_num_visits needs to be done when enter ot quit
 Result visitor_quit_room(Visitor *visitor, int quit_time) {
     if (visitor == NULL) {
         return NULL_PARAMETER;
@@ -266,13 +266,16 @@ Result visitor_quit_room(Visitor *visitor, int quit_time) {
     int visitor_total_time = quit_time -
                              (visitor->current_challenge->start_time);
     //update the best time in the Challenge
-    set_best_time_of_challenge(visitor->current_challenge->challenge,
-                               visitor_total_time);
+    if(set_best_time_of_challenge(visitor->current_challenge->challenge,
+                               visitor_total_time) == NULL_PARAMETER){
+        return NULL_PARAMETER;
+    }
     //increase the num of visits for the Challenge
     inc_num_visits(visitor->current_challenge->challenge);
     //update Visitor params and free allocated memory
     free(*(visitor->room_name));
-    visitor->room_name = NULL;
+    *(visitor->room_name) = NULL;
+    visitor->visitor_name = NULL;
     visitor->current_challenge->visitor = NULL;
     visitor->current_challenge->start_time = 0;
     visitor->current_challenge = NULL;
