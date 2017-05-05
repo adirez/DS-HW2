@@ -225,25 +225,35 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
         if ((level == room->challenges[challenge_idx].challenge->level ||
              level == All_Levels) && room->challenges[challenge_idx]
                                              .visitor == NULL) {
-
-            *(visitor->room_name) = malloc(strlen(room->challenges->challenge[0]
-                                                          .name));
+            //update the Visitor's room name
+            *(visitor->room_name) = malloc(strlen(room->name));
             if (*(visitor->room_name) == NULL) {
                 return MEMORY_PROBLEM;
             }
-            strcpy(*(visitor->room_name), room->challenges->challenge[0].name);
-            visitor->current_challenge->challenge = room->challenges->challenge;
-            visitor->current_challenge->visitor = visitor;
-            visitor->current_challenge->start_time = start_time;
+            strcpy(*(visitor->room_name), room->name);
+            //update the chosen ChallengeActivity in the room
+            room->challenges[challenge_idx].visitor = visitor;
+            room->challenges[challenge_idx].start_time = start_time;
+            //connecting the ChallengeActivity to the Visitor
+            *(visitor->current_challenge) = room->challenges[challenge_idx];
+            //increase the num of visits for the Challenge
+            inc_num_visits(room->challenges[challenge_idx].challenge);
             return OK;
         }
     }
-    //if the for loops ends without returning already it means that there
-    // were no available challenges
+    //if the for loop ends without exiting the function it means that there
+    //were no available challenges
     return NO_AVAILABLE_CHALLENGES;
 }
 
 
 Result visitor_quit_room(Visitor *visitor, int quit_time) {
+    if (visitor == NULL) {
+        return NULL_PARAMETER;
+    }
+    if (visitor->room_name == NULL) {
+        return NOT_IN_ROOM;
+    }
+
 
 }
