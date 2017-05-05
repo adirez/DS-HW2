@@ -38,8 +38,8 @@ Result reset_challenge(Challenge *challenge) {
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }
-    free(challenge->name);
     challenge->id = 0;
+    free(challenge->name);
     challenge->name = NULL;
     challenge->level = Easy;
     challenge->best_time = 0;

@@ -21,8 +21,8 @@ Result init_challenge_activity(ChallengeActivity *activity,
     if (activity == NULL || challenge == NULL) {
         return NULL_PARAMETER;
     }
-    activity->start_time = 0;
     activity->challenge = challenge;
+    activity->start_time = 0;
     activity->visitor = NULL;
     return OK;
 }
@@ -57,7 +57,7 @@ Result init_visitor(Visitor *visitor, char *name, int id) {
     strcpy(visitor->visitor_name, name);
 
     visitor->visitor_id = id;
-    visitor->room_name = NULL;
+    *(visitor->room_name) = NULL;
     visitor->current_challenge = NULL;
     return OK;
 }
@@ -72,9 +72,10 @@ Result reset_visitor(Visitor *visitor) {
     //visitor_name is allocated in initialization and needs to be freed.
     free(visitor->visitor_name);
     visitor->visitor_name = NULL;
-    visitor->room_name = NULL;
-    visitor->current_challenge = NULL;
     visitor->visitor_id = 0;
+    //double check
+    *visitor->room_name = NULL;
+    visitor->current_challenge = NULL;
     return OK;
 }
 
@@ -90,8 +91,7 @@ Result init_room(ChallengeRoom *room, char *name, int num_challenges) {
         return ILLEGAL_PARAMETER;
     }
 
-    room->num_of_challenges = num_challenges;
-
+    //allocates memory for the room name
     room->name = malloc(strlen(name) + 1);
     if (room->name == NULL) {
         return MEMORY_PROBLEM;
@@ -101,8 +101,13 @@ Result init_room(ChallengeRoom *room, char *name, int num_challenges) {
     //allocates memory for an array of the type ChallengeActivity
     room->challenges = malloc(num_challenges * sizeof(ChallengeActivity));
     if (room->challenges == NULL) {
-        return NULL_PARAMETER;
+        //free the already allocated memory
+        free(room->name);
+        room->name = NULL;
+        return MEMORY_PROBLEM;
     }
+
+    room->num_of_challenges = num_challenges;
     return OK;
 }
 
@@ -115,10 +120,8 @@ Result reset_room(ChallengeRoom *room) {
     }
     //room->name is allocated in initialization and needs to be freed.
     free(room->name);
-    room->name = NULL;
-    //likewise
+    //likewise to room->challenges
     free(room->challenges);
-    room->challenges = NULL;
     room->num_of_challenges = 0;
     return OK;
 }
@@ -254,6 +257,22 @@ Result visitor_quit_room(Visitor *visitor, int quit_time) {
     if (visitor->room_name == NULL) {
         return NOT_IN_ROOM;
     }
-
+    //calculates the total time that took the visitor to finish the challenge
+    int visitor_total_time = quit_time -
+                             (visitor->current_challenge->start_time);
+    //update the best time in the Challenge
+    set_best_time_of_challenge(visitor->current_challenge->challenge,
+                               visitor_total_time);
+    //update Visitor current_challenge Challenge_Activity
+    free(visitor->current_challenge->visitor);
 
 }
+
+
+
+
+
+
+
+
+
