@@ -11,10 +11,16 @@
 
 #include "challenge_system.h"
 
-Result create_system(char *init_file, ChallengeRoomSystem **sys){
-
+Result create_system(char *init_file, ChallengeRoomSystem **sys) {
+    if (init_file == NULL || sys == NULL) {
+        return NULL_PARAMETER;
+    }
+    FILE* system_settings = fopen(init_file, "r");
+    if (system_settings == NULL) {
+        return MEMORY_PROBLEM;
+    }
+    return OK;
 }
-
 
 Result destroy_system(ChallengeRoomSystem *sys, int destroy_time, char
                         **most_popular_challenge_p, char **challenge_best_time);
