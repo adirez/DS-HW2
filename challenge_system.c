@@ -11,7 +11,9 @@
 
 #include "challenge_system.h"
 
-Result create_system(char *init_file, ChallengeRoomSystem **sys);
+Result create_system(char *init_file, ChallengeRoomSystem **sys){
+
+}
 
 
 Result destroy_system(ChallengeRoomSystem *sys, int destroy_time, char
