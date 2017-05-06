@@ -7,13 +7,4 @@
 char *system_name;
 Challenge **system_challenges;
 ChallengeRoom **system_rooms;
-
-/*
- * a linked list of visitors
- */
-
-struct SVisitorsList
-{
-    Visitor *visitor;
-    struct SVisitorsList *next;
-} *VisitorsList;
+ChallengeActivity **system_challenge_activities;

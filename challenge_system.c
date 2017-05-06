@@ -11,21 +11,30 @@
 
 #include "challenge_system.h"
 
-#define BUFFER_SIZE 50
+/*
+ * a linked list of visitors
+ */
+struct SVisitorsList
+{
+    Visitor *visitor;
+    struct SVisitorsList *next;
+} *VisitorsList;
+
+#define BUFFER_SIZE 51
 
 
 Result create_system(char *init_file, ChallengeRoomSystem **sys) {
     if (init_file == NULL || (*sys) == NULL) {
         return NULL_PARAMETER;
     }
-    FILE *system_settings_file = fopen(init_file, "r");
-    if (system_settings_file == NULL) {
+    FILE *input = fopen(init_file, "r");
+    if (input == NULL) {
         return MEMORY_PROBLEM; //TODO not sure if that's the right Error
     }
 
     int num_challenges = 0;
     char buffer[BUFFER_SIZE] = "";
-    fscanf(system_settings_file, "%s %d", buffer, &num_challenges);
+    fscanf(input, "%s %d", buffer, &num_challenges);
     (*sys)->system_name = malloc(strlen(buffer) + 1);
     if ((*sys)->system_name == NULL) {
         return NULL_PARAMETER;
@@ -35,20 +44,37 @@ Result create_system(char *init_file, ChallengeRoomSystem **sys) {
     (*sys)->system_challenges = malloc(num_challenges * sizeof(void *));
     for (int i = 0; i < num_challenges; ++i) {
         int level = 0, id = 0;
-        fscanf(system_settings_file, "%s %d %d", buffer, &id, &level);
-        //do you think that's how it should be done??? :|
+        fscanf(input, "%s %d %d", buffer, &id, &level);
         init_challenge(&(*sys)->system_challenges[i], id, buffer, level);
     }
 
     int num_rooms = 0;
-    fscanf(system_settings_file, "%d", &num_rooms);
+    fscanf(input, "%d", &num_rooms);
     (*sys)->system_rooms = malloc(num_rooms * sizeof(void *));
     if ((*sys)->system_rooms == NULL) {
         return NULL_PARAMETER;
     }
+    for (int i = 0; i < num_rooms; ++i) {
+        int num_challenges_in_room = 0;
+        fscanf(input, "%s %d", buffer, &num_challenges_in_room);
+        init_room(&(*sys)->system_rooms[i], buffer, num_challenges_in_room);
+        ChallengeActivity **challengeActivity = malloc(num_challenges_in_room
+                                                       * sizeof(void*));
+        for (int j = 0; j < num_challenges_in_room; ++j) {
+            int challenge_id = 0;
+            fscanf(input, "%d", &challenge_id);
+            for (int k = 0; k < num_challenges; ++k) {
+                if((*sys)->system_challenges[k].id == challenge_id){
+                    init_challenge_activity(challengeActivity[j], &(*sys)
+                            ->system_challenges[k]);
+                }
+            }
+        }
+        free(challengeActivity);
+    }
 
 
-    fclose(system_settings_file);
+    fclose(input);
     return OK;
 }
 
