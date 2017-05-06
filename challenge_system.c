@@ -1,3 +1,4 @@
+
 //
 // Created by adire on 02-May-17.
 //
@@ -29,7 +30,7 @@ static Result update_system_name(ChallengeRoomSystem *sys, FILE *input_file) {
     fscanf(input_file, "%s", name);
     sys->system_name = malloc(strlen(name) + 1);
     if (sys->system_name == NULL) {
-        return NULL_PARAMETER;
+        return MEMORY_PROBLEM;
     }
     strcpy(sys->system_name, name);
     return OK;
@@ -47,6 +48,7 @@ static Result create_system_challenges(ChallengeRoomSystem *sys,
     //allocates memory for the Challenge's pointer array
     sys->system_challenges = malloc(*num_challenges * sizeof(void *));
     if (sys->system_challenges == NULL) {
+        free(sys->system_name);
         return MEMORY_PROBLEM;
     }
 
@@ -58,6 +60,7 @@ static Result create_system_challenges(ChallengeRoomSystem *sys,
         Result result = init_challenge(sys->system_challenges[i], id,
                                        challenge_name, level);
         if (result != OK) {
+            free(sys->system_name);
             return result;
         }
     }
@@ -65,9 +68,19 @@ static Result create_system_challenges(ChallengeRoomSystem *sys,
 }
 
 /*
+ * frees allocated memory for all the challenges in a specific room
+ */
+static void free_system_challenges(ChallengeRoomSystem *sys, int num_challenges) {
+    for (int i = 0; i < num_challenges; ++i) {
+        free(sys->system_challenges[i]);
+    }
+    return;
+}
+
+/*
  * takes the data of the rooms from the file and updates it to the system
  */
-Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file){
+static Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file) {
     int num_rooms = 0;
     char room_name[BUFFER_SIZE] = "";
     //reads the num of rooms from the file
@@ -75,19 +88,21 @@ Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file){
     //allocates memory for the room's ptr array
     sys->system_rooms = malloc(num_rooms * sizeof(void *));
     if (sys->system_rooms == NULL) {
+        free(sys->system_name);
+        free_system_challenges(sys, sys->system_challenges_num);
         return NULL_PARAMETER;
     }
 
-    Result result;
     //goes through each room
     for (int i = 0; i < num_rooms; ++i) {
         int num_challenges_in_room = 0;
         //reads the room's name and num of challenges within the room from file
         fscanf(input_file, "%s %d", room_name, &num_challenges_in_room);
         //initializes the room
-        result = init_room(sys->system_rooms[i], room_name,
-                           num_challenges_in_room);
+        Result result = init_room(sys->system_rooms[i], room_name, num_challenges_in_room);
         if(result != OK){
+            free(sys->system_name);
+            free_system_challenges(sys, sys->system_challenges_num);
             return result;
         }
         //creates a ptr to ChallengeActivity for each room
@@ -102,15 +117,16 @@ Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file){
             for (int k = 0; k < sys->system_challenges_num; ++k) {
                 if (sys->system_challenges[k]->id == challenge_id) {
                     //initialize the challenge activity for each challenge id
-                    result = init_challenge_activity(challengeActivity,
-                                                     sys->system_challenges[k]);
+                    result = init_challenge_activity(challengeActivity, sys->system_challenges[k]);
                     if(result != OK){
+                        free(sys->system_name);
+                        free_system_challenges(sys, sys->system_challenges_num);
                         return result;
                     }
                 }
                 //connects the challenge activity created to the challenge
                 // activity array in the room
-                sys->system_rooms[i]->challenges[j] = *challengeActivity;
+                sys->system_rooms[i]->challenges[j] = *challengeActivity; //TODO check if we can pass a struct by value or we need to create a function
             }
         }
         free(challengeActivity);
@@ -153,14 +169,28 @@ Result create_system(char *init_file, ChallengeRoomSystem **sys) {
 Result destroy_system(ChallengeRoomSystem *sys, int destroy_time, char
 **most_popular_challenge_p, char **challenge_best_time);
 
-
+/*
+ * receives details of a visitor, the room he chose, the start time and level
+ * he's interested in. checks if there's a suitable challenge in the asked room
+ * and updates the system accordingly
+ */
 Result visitor_arrive(ChallengeRoomSystem *sys, char *room_name, char
 *visitor_name, int visitor_id, Level level, int start_time){
     if(sys == NULL){
         return NULL_PARAMETER;
     }
-    for (int i = 0; i < sys->system_room_num; ++i){
 
+    //finds the visitor through ptr by his id
+    /*
+     *while(1) {
+     * iterate over VisitorsList to find ptr of the suitable visitor
+     * }
+     */
+    //iterating over all the rooms to find the asked room
+    for (int i = 0; i < sys->system_room_num; ++i){
+        if ( strcmp (sys->system_rooms[i]->name, room_name) ==0){
+            Result result = visitor_enter_room;//to be continued
+        }
     }
 }
 

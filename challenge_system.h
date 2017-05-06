@@ -52,4 +52,3 @@ Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name);
 
 
 #endif // CHALLENGE_SYSTEM_H_
-
