@@ -11,19 +11,49 @@
 
 #include "challenge_system.h"
 
+#define BUFFER_SIZE 50
+
+
 Result create_system(char *init_file, ChallengeRoomSystem **sys) {
-    if (init_file == NULL || sys == NULL) {
+    if (init_file == NULL || (*sys) == NULL) {
         return NULL_PARAMETER;
     }
-    FILE* system_settings = fopen(init_file, "r");
-    if (system_settings == NULL) {
-        return MEMORY_PROBLEM;
+    FILE *system_settings_file = fopen(init_file, "r");
+    if (system_settings_file == NULL) {
+        return MEMORY_PROBLEM; //TODO not sure if that's the right Error
     }
+
+    int num_challenges = 0;
+    char buffer[BUFFER_SIZE] = "";
+    fscanf(system_settings_file, "%s %d", buffer, &num_challenges);
+    (*sys)->system_name = malloc(strlen(buffer) + 1);
+    if ((*sys)->system_name == NULL) {
+        return NULL_PARAMETER;
+    }
+    strcpy((*sys)->system_name, buffer);
+
+    (*sys)->system_challenges = malloc(num_challenges * sizeof(void *));
+    for (int i = 0; i < num_challenges; ++i) {
+        int level = 0, id = 0;
+        fscanf(system_settings_file, "%s %d %d", buffer, &id, &level);
+        //do you think that's how it should be done??? :|
+        init_challenge(&(*sys)->system_challenges[i], id, buffer, level);
+    }
+
+    int num_rooms = 0;
+    fscanf(system_settings_file, "%d", &num_rooms);
+    (*sys)->system_rooms = malloc(num_rooms * sizeof(void *));
+    if ((*sys)->system_rooms == NULL) {
+        return NULL_PARAMETER;
+    }
+
+
+    fclose(system_settings_file);
     return OK;
 }
 
 Result destroy_system(ChallengeRoomSystem *sys, int destroy_time, char
-                        **most_popular_challenge_p, char **challenge_best_time);
+**most_popular_challenge_p, char **challenge_best_time);
 
 
 Result visitor_arrive(ChallengeRoomSystem *sys, char *room_name, char
