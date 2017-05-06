@@ -14,14 +14,108 @@
 /*
  * a linked list of visitors
  */
-struct SVisitorsList
-{
+struct SVisitorsList {
     Visitor *visitor;
     struct SVisitorsList *next;
 } *VisitorsList;
 
 #define BUFFER_SIZE 51
 
+/*
+ * Reads the name from the file and updates it in the system
+ */
+static Result update_system_name(ChallengeRoomSystem *sys, FILE *input_file) {
+    char name[BUFFER_SIZE] = "";
+    fscanf(input_file, "%s", name);
+    sys->system_name = malloc(strlen(name) + 1);
+    if (sys->system_name == NULL) {
+        return NULL_PARAMETER;
+    }
+    strcpy(sys->system_name, name);
+    return OK;
+}
+
+/*
+ * takes the data of the challenges from the file and updates it to the system
+ * returns the num of challenges through ptr
+ */
+static Result create_system_challenges(ChallengeRoomSystem *sys,
+                                       FILE *input_file, int *num_challenges) {
+    char challenge_name[BUFFER_SIZE] = "";
+    //reads the number of challenges from the file
+    fscanf(input_file, "%d", num_challenges);
+    //allocates memory for the Challenge's pointer array
+    sys->system_challenges = malloc(*num_challenges * sizeof(void *));
+    if (sys->system_challenges == NULL) {
+        return MEMORY_PROBLEM;
+    }
+
+    for (int i = 0; i < *num_challenges; ++i) {
+        int level = 0, id = 0;
+        //reads the challenge params and initialize every challenge to it's
+        // pointer in the array
+        fscanf(input_file, "%s %d %d", challenge_name, &id, &level);
+        Result result = init_challenge(sys->system_challenges[i], id,
+                                       challenge_name, level);
+        if (result != OK) {
+            return result;
+        }
+    }
+    return OK;
+}
+
+/*
+ * takes the data of the rooms from the file and updates it to the system
+ */
+Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file,
+                           int num_challenges) {
+    int num_rooms = 0;
+    char room_name[BUFFER_SIZE] = "";
+    //reads the num of rooms from the file
+    fscanf(input_file, "%d", &num_rooms);
+    //allocates memory for the room's ptr array
+    sys->system_rooms = malloc(num_rooms * sizeof(void *));
+    if (sys->system_rooms == NULL) {
+        return NULL_PARAMETER;
+    }
+
+    Result result;
+    //goes through each room
+    for (int i = 0; i < num_rooms; ++i) {
+        int num_challenges_in_room = 0;
+        //reads the room's name and num of challenges within the room from file
+        fscanf(input_file, "%s %d", room_name, &num_challenges_in_room);
+        //initializes the room
+        result = init_room(sys->system_rooms[i], room_name,
+                           num_challenges_in_room);
+        //creates an array of ptr to ChallengeActivities for each room
+        ChallengeActivity *challengeActivity = malloc(num_challenges_in_room
+                                                       * sizeof(void *));
+        //goes through all the challenge's ids for each room
+        for (int j = 0; j < num_challenges_in_room; ++j) {
+            int challenge_id = 0;
+            //reads the id from file
+            fscanf(input_file, "%d", &challenge_id);
+            //goes through the challenge array in the system to find the
+            // right challenge to add to the room by id
+            for (int k = 0; k < num_challenges; ++k) {
+                if (sys->system_challenges[k]->id == challenge_id) {
+                    //initialize the challenge activity for each challenge id
+                    result = init_challenge_activity(challengeActivity,
+                                                     sys->system_challenges[k]);
+                    if(result != OK){
+                        return result;
+                    }
+                }
+                //connects the challenge activity created to the challenge
+                // activity array in the room
+                sys->system_rooms[i]->challenges[j] = *challengeActivity;
+            }
+        }
+        free(challengeActivity);
+        return OK;
+    }
+}
 
 Result create_system(char *init_file, ChallengeRoomSystem **sys) {
     if (init_file == NULL || (*sys) == NULL) {
@@ -32,47 +126,21 @@ Result create_system(char *init_file, ChallengeRoomSystem **sys) {
         return MEMORY_PROBLEM; //TODO not sure if that's the right Error
     }
 
+    Result result = update_system_name(*sys, input);
+    if (result != OK) {
+        return result;
+    }
+
     int num_challenges = 0;
-    char buffer[BUFFER_SIZE] = "";
-    fscanf(input, "%s %d", buffer, &num_challenges);
-    (*sys)->system_name = malloc(strlen(buffer) + 1);
-    if ((*sys)->system_name == NULL) {
-        return NULL_PARAMETER;
-    }
-    strcpy((*sys)->system_name, buffer);
-
-    (*sys)->system_challenges = malloc(num_challenges * sizeof(void *));
-    for (int i = 0; i < num_challenges; ++i) {
-        int level = 0, id = 0;
-        fscanf(input, "%s %d %d", buffer, &id, &level);
-        init_challenge(&(*sys)->system_challenges[i], id, buffer, level);
+    result = create_system_challenges(*sys, input, &num_challenges);
+    if (result != OK) {
+        return result;
     }
 
-    int num_rooms = 0;
-    fscanf(input, "%d", &num_rooms);
-    (*sys)->system_rooms = malloc(num_rooms * sizeof(void *));
-    if ((*sys)->system_rooms == NULL) {
-        return NULL_PARAMETER;
+    result = create_system_rooms(*sys, input, num_challenges);
+    if (result != OK) {
+        return result;
     }
-    for (int i = 0; i < num_rooms; ++i) {
-        int num_challenges_in_room = 0;
-        fscanf(input, "%s %d", buffer, &num_challenges_in_room);
-        init_room(&(*sys)->system_rooms[i], buffer, num_challenges_in_room);
-        ChallengeActivity **challengeActivity = malloc(num_challenges_in_room
-                                                       * sizeof(void*));
-        for (int j = 0; j < num_challenges_in_room; ++j) {
-            int challenge_id = 0;
-            fscanf(input, "%d", &challenge_id);
-            for (int k = 0; k < num_challenges; ++k) {
-                if((*sys)->system_challenges[k].id == challenge_id){
-                    init_challenge_activity(challengeActivity[j], &(*sys)
-                            ->system_challenges[k]);
-                }
-            }
-        }
-        free(challengeActivity);
-    }
-
 
     fclose(input);
     return OK;

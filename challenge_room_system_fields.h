@@ -7,4 +7,3 @@
 char *system_name;
 Challenge **system_challenges;
 ChallengeRoom **system_rooms;
-ChallengeActivity **system_challenge_activities;
