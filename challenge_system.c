@@ -242,16 +242,10 @@ Result change_challenge_name(ChallengeRoomSystem *sys, int challenge_id,
     //iterating over the challenges in the system
     for (int i = 0; i < sys->system_num_challenges; ++i) {
         if (sys->system_challenges[i]->id == challenge_id) {
-
-            //creating a temp ptr to prevent data loss
-            char *tmp_ptr = realloc(sys->system_challenges[i]->name, strlen(new_name) + 1);
-            if (tmp_ptr == NULL) {
-                return MEMORY_PROBLEM;
+            Result result = change_name(sys->system_challenges[i], new_name);
+            if (result != OK) {
+                return result;
             }
-
-            //changing the ptr of the original name to the new allocated ptr
-            sys->system_challenges[i]->name = tmp_ptr;
-            strcpy(sys->system_challenges[i]->name, new_name);
             return OK;
         }
     }
@@ -273,14 +267,10 @@ Result change_system_room_name(ChallengeRoomSystem *sys, char *current_name,
 
         //checking if we got to the suitable room
         if (strcmp(sys->system_rooms[i]->name, current_name) == 0) {
-            char *tmp_ptr = realloc(sys->system_rooms[i]->name, new_name);
-            if (tmp_ptr == NULL) {
-                return MEMORY_PROBLEM;
+            Result result = change_room_name(sys->system_rooms[i], new_name);
+            if (result != OK) {
+                return result;
             }
-
-            //changing the ptr of the original name to the new allocated ptr
-            sys->system_rooms[i]->name = tmp_ptr;
-            strcpy(sys->system_rooms[i]->name, new_name);
             return OK;
         }
     }
@@ -289,9 +279,28 @@ Result change_system_room_name(ChallengeRoomSystem *sys, char *current_name,
     return ILLEGAL_PARAMETER;
 }
 
-
+/*
+ * receives a challenge name, searches the challenge and returns the best time of the challenge through ptr
+ */
 Result best_time_of_system_challenge(ChallengeRoomSystem *sys,
-                                     char *challenge_name, int *time);
+                                     char *challenge_name, int *time) {
+    if (sys == NULL || challenge_name == NULL || time == NULL) {
+        return NULL_PARAMETER;
+    }
+    int best_time = 0;
+    for (int i = 0; i < sys->system_num_challenges; ++i) {
+        if (strcmp(sys->system_challenges[i]->name, challenge_name) == 0) {
+            Result result = best_time_of_challenge(sys->system_challenges[i], time);
+            if (result != OK) {
+                return result;
+            }
+            return OK;
+        }
+    }
+
+    //if we got here, it means that challenge_name wasn't found in the system
+    return ILLEGAL_PARAMETER;
+}
 
 
 Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name);
