@@ -15,8 +15,8 @@ typedef struct SChallengeRoomSystem
     char *system_name;
     Challenge **system_challenges;
     ChallengeRoom **system_rooms;
-    int system_room_num;
-    int system_challenges_num;
+    int system_num_rooms;
+    int system_num_challenges;
 } ChallengeRoomSystem;
 
 

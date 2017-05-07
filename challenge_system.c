@@ -1,4 +1,3 @@
-
 //
 // Created by adire on 02-May-17.
 //
@@ -89,7 +88,7 @@ static Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file) {
     sys->system_rooms = malloc(num_rooms * sizeof(void *));
     if (sys->system_rooms == NULL) {
         free(sys->system_name);
-        free_system_challenges(sys, sys->system_challenges_num);
+        free_system_challenges(sys, sys->system_num_challenges);
         return NULL_PARAMETER;
     }
 
@@ -102,7 +101,7 @@ static Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file) {
         Result result = init_room(sys->system_rooms[i], room_name, num_challenges_in_room);
         if(result != OK){
             free(sys->system_name);
-            free_system_challenges(sys, sys->system_challenges_num);
+            free_system_challenges(sys, sys->system_num_challenges);
             return result;
         }
         //creates a ptr to ChallengeActivity for each room
@@ -114,13 +113,13 @@ static Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file) {
             fscanf(input_file, "%d", &challenge_id);
             //goes through the challenge array in the system to find the
             // right challenge to add to the room by id
-            for (int k = 0; k < sys->system_challenges_num; ++k) {
+            for (int k = 0; k < sys->system_num_challenges; ++k) {
                 if (sys->system_challenges[k]->id == challenge_id) {
                     //initialize the challenge activity for each challenge id
                     result = init_challenge_activity(challengeActivity, sys->system_challenges[k]);
                     if(result != OK){
                         free(sys->system_name);
-                        free_system_challenges(sys, sys->system_challenges_num);
+                        free_system_challenges(sys, sys->system_num_challenges);
                         return result;
                     }
                 }
@@ -187,7 +186,7 @@ Result visitor_arrive(ChallengeRoomSystem *sys, char *room_name, char
      * }
      */
     //iterating over all the rooms to find the asked room
-    for (int i = 0; i < sys->system_room_num; ++i){
+    for (int i = 0; i < sys->system_num_rooms; ++i){
         if ( strcmp (sys->system_rooms[i]->name, room_name) ==0){
             Result result = visitor_enter_room;//to be continued
         }
