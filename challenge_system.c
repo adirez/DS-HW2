@@ -249,7 +249,7 @@ Result change_challenge_name(ChallengeRoomSystem *sys, int challenge_id,
                 return MEMORY_PROBLEM;
             }
 
-            //releasing the allocated memory of the original name
+            //changing the ptr of the original name to the new allocated ptr
             sys->system_challenges[i]->name = tmp_ptr;
             strcpy(sys->system_challenges[i]->name, new_name);
             return OK;
@@ -260,9 +260,34 @@ Result change_challenge_name(ChallengeRoomSystem *sys, int challenge_id,
     return ILLEGAL_PARAMETER;
 }
 
-
+/*
+ * receives a system and changes it's name to a new name receives as an input
+ */
 Result change_system_room_name(ChallengeRoomSystem *sys, char *current_name,
-                               char *new_name);
+                               char *new_name) {
+    if (sys == NULL || current_name == NULL || new_name == NULL) {
+        return NULL_PARAMETER;
+    }
+    //iterating over all the rooms
+    for (int i = 0; i < sys->system_num_rooms; ++i) {
+
+        //checking if we got to the suitable room
+        if (strcmp(sys->system_rooms[i]->name, current_name) == 0) {
+            char *tmp_ptr = realloc(sys->system_rooms[i]->name, new_name);
+            if (tmp_ptr == NULL) {
+                return MEMORY_PROBLEM;
+            }
+
+            //changing the ptr of the original name to the new allocated ptr
+            sys->system_rooms[i]->name = tmp_ptr;
+            strcpy(sys->system_rooms[i]->name, new_name);
+            return OK;
+        }
+    }
+
+    //if we got here, it means that current_name wasn't found in the system
+    return ILLEGAL_PARAMETER;
+}
 
 
 Result best_time_of_system_challenge(ChallengeRoomSystem *sys,
