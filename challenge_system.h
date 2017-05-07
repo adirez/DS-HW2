@@ -17,6 +17,10 @@ typedef struct SChallengeRoomSystem
     ChallengeRoom **system_rooms;
     int system_num_rooms;
     int system_num_challenges;
+    struct VisitorNode {
+        Visitor *visitor;
+        struct VisitorNode *next;
+    } *visitorNode;
 } ChallengeRoomSystem;
 
 

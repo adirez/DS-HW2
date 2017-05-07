@@ -14,13 +14,16 @@
 /*
  * a linked list of visitors
  */
+/*
 struct SVisitorsList {
     Visitor *visitor;
     struct SVisitorsList *next;
 } *VisitorsList;
+*/
 
 #define BUFFER_SIZE 51
 
+typedef struct VisitorNode *visitorNode; //TODO find how the hell to typedef this correctly
 /*
  * frees allocated memory for a system name
  */
@@ -214,11 +217,48 @@ Result all_visitors_quit(ChallengeRoomSystem *sys, int quit_time);
 
 
 Result system_room_of_visitor(ChallengeRoomSystem *sys, char *visitor_name,
-                              char **room_name);
+                              char **room_name) {
+    if (sys == NULL) {
+        return NULL_PARAMETER;
+    }
+    if (visitor_name == NULL || *room_name == NULL) {  //TODO *room_name or room_name?
+        return ILLEGAL_PARAMETER;
+    }
+    while(1) {
 
+    }
 
+    return OK;
+}
+
+/*
+ * gets a challenge id, and changes the name of the suitable challenge to a new name received as an input
+ */
 Result change_challenge_name(ChallengeRoomSystem *sys, int challenge_id,
-                             char *new_name);
+                             char *new_name) {
+    if (sys == NULL || new_name == NULL) {
+        return NULL_PARAMETER;
+    }
+    //iterating over the challenges in the system
+    for (int i = 0; i < sys->system_num_challenges; ++i) {
+        if (sys->system_challenges[i]->id == challenge_id) {
+
+            //creating a temp ptr to prevent data loss
+            char *tmp_ptr = realloc(sys->system_challenges[i]->name, strlen(new_name) + 1);
+            if (tmp_ptr == NULL) {
+                return MEMORY_PROBLEM;
+            }
+
+            //releasing the allocated memory of the original name
+            sys->system_challenges[i]->name = tmp_ptr;
+            strcpy(sys->system_challenges[i]->name, new_name);
+            return OK;
+        }
+    }
+
+    //if we got here, it means that challenge_id wasn't found in the system
+    return ILLEGAL_PARAMETER;
+}
 
 
 Result change_system_room_name(ChallengeRoomSystem *sys, char *current_name,
