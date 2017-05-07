@@ -199,11 +199,28 @@ Result room_of_visitor(Visitor *visitor, char **room_name) {
     return OK;
 }
 
-static int lexCmp(const void *p1, const void *p2) {
-    char *s1 = (char *) p1;
-    char *s2 = (char *) p2;
+/*
+ * finds the smallest lexicographically small suitable challenge in the room
+ */
+static ChallengeActivity *find_lex_smallest (ChallengeRoom *room, Level level, int *challenge_idx) {
+    ChallengeActivity *ptr = NULL;
+    int num_challenges = room->num_of_challenges;
 
-    return strcmp(s1, s2);
+    //loops through all the challenge activities in the room and compares each
+    //challenge's level to the wanted level from the user
+    for (int i = 0; i < num_challenges; ++i) {
+        if ( (level == All_Levels || level == room->challenges[i].challenge->level) &&
+                room->challenges[i].visitor == NULL) {
+
+            //checking strcmp to find the lexicographically smallest suitable room
+            if (ptr == NULL ||
+                    strcmp(room->challenges[i].challenge->name, ptr->challenge->name) < 0) {
+                ptr = &(room->challenges[i]);
+                *challenge_idx = i;
+            }
+        }
+    }
+    return ptr;
 }
 
 /*
@@ -218,44 +235,30 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
     if (visitor->room_name != NULL) {
         return ALREADY_IN_ROOM;
     }
-    //sorts the challenges in the room lexicographically
-    qsort(room->challenges, (size_t) room->num_of_challenges, sizeof
-            (ChallengeActivity), lexCmp);
+    int challenge_idx = 0;
+    ChallengeActivity *ptr = find_lex_smallest(room, level, &challenge_idx);
 
-    //loops through all the challenge activities in the room and compares each
-    //challenge's level to the wanted level from the user
-    for (int challenge_idx = 0;
-         challenge_idx < room->num_of_challenges; ++challenge_idx) {
-
-        //if there's a match with the levels or the wanted level is
-        //'All_Levels' than only if the challenge has no visitor already,
-        //the visitor is going inside the room and all the params are
-        //changed accordingly
-
-        if ((level == room->challenges[challenge_idx].challenge->level ||
-             level == All_Levels) && room->challenges[challenge_idx]
-                                             .visitor == NULL) {
-            //update the Visitor's room name
-            *(visitor->room_name) = malloc(strlen(room->name) + 1);
-            if (*(visitor->room_name) == NULL) {
-                return MEMORY_PROBLEM;
-            }
-            strcpy(*(visitor->room_name), room->name);
-            //update the chosen ChallengeActivity in the room
-            room->challenges[challenge_idx].visitor = visitor;
-            room->challenges[challenge_idx].start_time = start_time;
-            //connecting the ChallengeActivity to the Visitor
-            visitor->current_challenge = &(room->challenges[challenge_idx]);
-            //increase the num of visits for the Challenge
-            if (inc_num_visits(visitor->current_challenge->challenge) == NULL_PARAMETER) {
-                return NULL_PARAMETER;
-            }
-            return OK;
-        }
+    //if ptr is NULL, it means there was no available challenge found
+    if (ptr == NULL) {
+        return NO_AVAILABLE_CHALLENGES;
     }
-    //if the for loop ends without exiting the function it means that there
-    //were no available challenges
-    return NO_AVAILABLE_CHALLENGES;
+
+    //update the room in the visitor
+    *(visitor->room_name) = malloc (strlen(ptr->challenge->name) + 1);
+    if (*(visitor->room_name) == NULL) {
+        return MEMORY_PROBLEM;
+    }
+    strcpy(*(visitor->room_name), ptr->challenge->name);
+    //update the chosen ChallengeActivity in the room
+    room->challenges[challenge_idx].visitor = visitor;
+    room->challenges[challenge_idx].start_time = start_time;
+    //connecting the ChallengeActivity to the Visitor
+    visitor->current_challenge = &(room->challenges[challenge_idx]);
+    //increase the num of visits for the Challenge
+    if (inc_num_visits(visitor->current_challenge->challenge) == NULL_PARAMETER) {
+        return NULL_PARAMETER;
+    }
+    return OK;
 }
 //TODO make sure it's ok to check the return value of inc_num_visits ^
 

@@ -73,7 +73,7 @@ Result set_best_time_of_challenge(Challenge *challenge, int time) {
     }
     //when best time is set to 0 it means that there were no visitors yet
     //if the time is legal (meaning not negative) set it as the best time
-    if (time >= 0 && challenge->best_time == 0) {
+    if (time >= 0 && time < challenge->best_time) {
         challenge->best_time = time;
         return OK;
     }

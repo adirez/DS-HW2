@@ -287,7 +287,6 @@ Result best_time_of_system_challenge(ChallengeRoomSystem *sys,
     if (sys == NULL || challenge_name == NULL || time == NULL) {
         return NULL_PARAMETER;
     }
-    int best_time = 0;
     for (int i = 0; i < sys->system_num_challenges; ++i) {
         if (strcmp(sys->system_challenges[i]->name, challenge_name) == 0) {
             Result result = best_time_of_challenge(sys->system_challenges[i], time);
