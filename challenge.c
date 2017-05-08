@@ -14,6 +14,7 @@
  * initializes the challenge type given by the user
  */
 Result init_challenge(Challenge *challenge, int id, char *name, Level level) {
+    assert(challenge != NULL && name != NULL);
     if (challenge == NULL || name == NULL) {
         return NULL_PARAMETER;
     }
@@ -35,6 +36,7 @@ Result init_challenge(Challenge *challenge, int id, char *name, Level level) {
  * resets all the params of challenge
  */
 Result reset_challenge(Challenge *challenge) {
+    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }
@@ -51,6 +53,7 @@ Result reset_challenge(Challenge *challenge) {
  * changes the name of the challenge
  */
 Result change_name(Challenge *challenge, char *name) {
+    assert(challenge != NULL || name != NULL);
     if (challenge == NULL || name == NULL) {
         return NULL_PARAMETER;
     }
@@ -68,6 +71,7 @@ Result change_name(Challenge *challenge, char *name) {
  * sets the best time to be the time given by the user
  */
 Result set_best_time_of_challenge(Challenge *challenge, int time) {
+    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }
@@ -89,6 +93,7 @@ Result set_best_time_of_challenge(Challenge *challenge, int time) {
  * returns the best time through ptr
  */
 Result best_time_of_challenge(Challenge *challenge, int *time) {
+    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }
@@ -100,6 +105,7 @@ Result best_time_of_challenge(Challenge *challenge, int *time) {
  * increases the num of visits by 1
  */
 Result inc_num_visits(Challenge *challenge) {
+    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }
@@ -111,6 +117,7 @@ Result inc_num_visits(Challenge *challenge) {
  * returns the num of visits through ptr
  */
 Result num_visits(Challenge *challenge, int *visits) {
+    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }

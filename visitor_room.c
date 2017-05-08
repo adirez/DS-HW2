@@ -18,6 +18,7 @@
  */
 Result init_challenge_activity(ChallengeActivity *activity,
                                Challenge *challenge) {
+    assert(activity != NULL || challenge != NULL);
     if (activity == NULL || challenge == NULL) {
         return NULL_PARAMETER;
     }
@@ -31,6 +32,7 @@ Result init_challenge_activity(ChallengeActivity *activity,
  * resets all the fields of a received activity.
  */
 Result reset_challenge_activity(ChallengeActivity *activity) {
+    assert(activity != NULL);
     if (activity == NULL) {
         return NULL_PARAMETER;
     }
@@ -46,6 +48,7 @@ Result reset_challenge_activity(ChallengeActivity *activity) {
  * room_name and current_challenge are by default set to NULL.
  */
 Result init_visitor(Visitor *visitor, char *name, int id) {
+    assert(visitor != NULL || name != NULL);
     if (visitor == NULL || name == NULL) {
         return NULL_PARAMETER;
     }
@@ -58,6 +61,7 @@ Result init_visitor(Visitor *visitor, char *name, int id) {
 
     visitor->visitor_id = id;
     *(visitor->room_name) = NULL;
+    visitor->room_name = NULL;
     visitor->current_challenge = NULL;
     return OK;
 }
@@ -66,6 +70,7 @@ Result init_visitor(Visitor *visitor, char *name, int id) {
  * resets all the fields of a given visitor and frees the allocated memory.
  */
 Result reset_visitor(Visitor *visitor) {
+    assert(visitor != NULL);
     if (visitor == NULL) {
         return NULL_PARAMETER;
     }
@@ -73,8 +78,8 @@ Result reset_visitor(Visitor *visitor) {
     free(visitor->visitor_name);
     visitor->visitor_name = NULL;
     visitor->visitor_id = 0;
-    //double check
-    *visitor->room_name = NULL;
+    *(visitor->room_name) = NULL;
+    visitor->room_name = NULL;
     visitor->current_challenge = NULL;
     return OK;
 }
@@ -84,6 +89,7 @@ Result reset_visitor(Visitor *visitor) {
  * in the relevant fields of a given room. allocates memory for the name.
  */
 Result init_room(ChallengeRoom *room, char *name, int num_challenges) {
+    assert(room != NULL || name != NULL);
     if (room == NULL || name == NULL) {
         return NULL_PARAMETER;
     }
@@ -99,7 +105,7 @@ Result init_room(ChallengeRoom *room, char *name, int num_challenges) {
     strcpy(room->name, name);
 
     //allocates memory for an array of the type ChallengeActivity
-    room->challenges = malloc(num_challenges * sizeof(ChallengeActivity));
+    room->challenges = malloc(num_challenges * sizeof(*(room->challenges)));
     if (room->challenges == NULL) {
         //free the already allocated memory
         free(room->name);
@@ -115,6 +121,7 @@ Result init_room(ChallengeRoom *room, char *name, int num_challenges) {
  * resets all the fields of a given room and frees the allocated memory.
  */
 Result reset_room(ChallengeRoom *room) {
+    assert(room != NULL);
     if (room == NULL) {
         return NULL_PARAMETER;
     }
@@ -122,10 +129,8 @@ Result reset_room(ChallengeRoom *room) {
     free(room->name);
     room->name = NULL;
     //loops through all the challenge activities in the room and resets them
-    for (int challenge_idx = 0;
-         challenge_idx < room->num_of_challenges; ++challenge_idx) {
-
-        reset_challenge_activity(&(room->challenges[challenge_idx]));
+    for (int i = 0; i < room->num_of_challenges; ++i) {
+        reset_challenge_activity(room->challenges + i);
     }
     free(room->challenges);
     room->challenges = NULL;
@@ -139,6 +144,7 @@ Result reset_room(ChallengeRoom *room) {
  */
 Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
                                     int *places) {
+    assert(room != NULL);
     if (room == NULL) {
         return NULL_PARAMETER;
     }
@@ -151,12 +157,10 @@ Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
     int count = 0;
     //loops through all the challenge activities in the room and compares each
     //challenge's level to the given level from the user
-    for (int challenge_idx = 0; challenge_idx < room->num_of_challenges;
-         ++challenge_idx) {
-
+    for (int i = 0; i < room->num_of_challenges; ++i) {
         //checking that the level is suitable and that the room is empty
-        if (room->challenges[challenge_idx].challenge->level == level
-            && room->challenges[challenge_idx].visitor == NULL) {
+        if (room->challenges[i].challenge->level == level
+            && room->challenges[i].visitor == NULL) {
             count++;
         }
     }
@@ -168,6 +172,8 @@ Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
  * changes the name of the chosen room to the received name
  */
 Result change_room_name(ChallengeRoom *room, char *new_name) {
+    assert(room
+                   !-NULL && new_name != NULL);
     if (room == NULL || new_name == NULL) {
         return NULL_PARAMETER;
     }
@@ -184,6 +190,7 @@ Result change_room_name(ChallengeRoom *room, char *new_name) {
 
 //TODO check the function again after system type
 Result room_of_visitor(Visitor *visitor, char **room_name) {
+    assert(room_name != NULL && visitor != NULL);
     if (room_name == NULL) {
         return NULL_PARAMETER;
     }
@@ -202,19 +209,22 @@ Result room_of_visitor(Visitor *visitor, char **room_name) {
 /*
  * finds the smallest lexicographically small suitable challenge in the room
  */
-static ChallengeActivity *find_lex_smallest (ChallengeRoom *room, Level level, int *challenge_idx) {
+static ChallengeActivity *
+find_lex_smallest(ChallengeRoom *room, Level level, int *challenge_idx) {
     ChallengeActivity *ptr = NULL;
     int num_challenges = room->num_of_challenges;
 
     //loops through all the challenge activities in the room and compares each
     //challenge's level to the wanted level from the user
     for (int i = 0; i < num_challenges; ++i) {
-        if ( (level == All_Levels || level == room->challenges[i].challenge->level) &&
-                room->challenges[i].visitor == NULL) {
+        if ((level == All_Levels ||
+             level == room->challenges[i].challenge->level) &&
+            room->challenges[i].visitor == NULL) {
 
             //checking strcmp to find the lexicographically smallest suitable room
             if (ptr == NULL ||
-                    strcmp(room->challenges[i].challenge->name, ptr->challenge->name) < 0) {
+                strcmp(room->challenges[i].challenge->name,
+                       ptr->challenge->name) < 0) {
                 ptr = &(room->challenges[i]);
                 *challenge_idx = i;
             }
@@ -229,10 +239,11 @@ static ChallengeActivity *find_lex_smallest (ChallengeRoom *room, Level level, i
  */
 Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
                           int start_time) {
+    assert(room != NULL && visitor != NULL);
     if (room == NULL || visitor == NULL) {
         return NULL_PARAMETER;
     }
-    if (visitor->room_name != NULL) {
+    if (*(visitor->room_name) != NULL) {
         return ALREADY_IN_ROOM;
     }
     int challenge_idx = 0;
@@ -244,7 +255,7 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
     }
 
     //update the room in the visitor
-    *(visitor->room_name) = malloc (strlen(ptr->challenge->name) + 1);
+    *(visitor->room_name) = malloc(strlen(ptr->challenge->name) + 1);
     if (*(visitor->room_name) == NULL) {
         return MEMORY_PROBLEM;
     }
@@ -255,7 +266,8 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
     //connecting the ChallengeActivity to the Visitor
     visitor->current_challenge = &(room->challenges[challenge_idx]);
     //increase the num of visits for the Challenge
-    if (inc_num_visits(visitor->current_challenge->challenge) == NULL_PARAMETER) {
+    if (inc_num_visits(visitor->current_challenge->challenge) ==
+        NULL_PARAMETER) {
         return NULL_PARAMETER;
     }
     return OK;
@@ -263,10 +275,11 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
 //TODO make sure it's ok to check the return value of inc_num_visits ^
 
 Result visitor_quit_room(Visitor *visitor, int quit_time) {
+    assert(visitor != NULL);
     if (visitor == NULL) {
         return NULL_PARAMETER;
     }
-    if (visitor->room_name == NULL) {
+    if (*(visitor->room_name) == NULL) {
         return NOT_IN_ROOM;
     }
     //calculates the total time that took the visitor to finish the challenge
