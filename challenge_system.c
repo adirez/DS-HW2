@@ -74,7 +74,8 @@ static Result create_system_challenges(ChallengeRoomSystem *sys,
     //reads the number of challenges from the file
     fscanf(input_file, "%d\n", num_challenges);
     //allocates memory for the Challenge's pointer array
-    sys->system_challenges = malloc(*num_challenges * sizeof(void *));
+    sys->system_challenges = malloc(*num_challenges *
+                                            sizeof(*sys->system_challenges));
     if (sys->system_challenges == NULL) {
         free_system_name(sys);
         return MEMORY_PROBLEM;
@@ -107,7 +108,7 @@ static Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file) {
     //reads the num of rooms from the file
     fscanf(input_file, "%d\n", &num_rooms);
     //allocates memory for the room's ptr array
-    sys->system_rooms = malloc(num_rooms * sizeof(void *));
+    sys->system_rooms = malloc(num_rooms * sizeof(*sys->system_rooms));
     if (sys->system_rooms == NULL) {
         free_system_name(sys);
         free_system_challenges(sys, sys->system_num_challenges);
@@ -202,32 +203,71 @@ Result create_system(char *init_file, ChallengeRoomSystem **sys) {
 Result destroy_system(ChallengeRoomSystem *sys, int destroy_time, char
 **most_popular_challenge_p, char **challenge_best_time);
 
+/*
+ * frees any previously allocated memory of the visitors list from the system
+ */
+static void destroy_visitor_list(VisitorsList ptr) {
+    while (ptr != NULL){
+        VisitorsList to_delete = ptr;
+        ptr = ptr->next;
+        free(to_delete);
+    }
+}
+
+/*
+ * creates a visitor and initialize it
+ * then creates a new node to the visitors list in the system and adds the
+ * new visitor to the list
+ */
 static Result add_visitor_node(ChallengeRoomSystem *sys, char *visitor_name,
-                               int visitor_id){
+                               int visitor_id) {
     assert(sys != NULL && visitor != NULL);
-    //get to the ptr to the last visitor in the list
-    VisitorsList node_ptr;
-    for(node_ptr = sys->visitorsListHead; node_ptr->next != NULL;
-        node_ptr = node_ptr->next);
     //create and initialize a new visitor
     Visitor *new_visitor = malloc(sizeof(*new_visitor));
-    if(new_visitor == NULL){
+    if (new_visitor == NULL) {
         return MEMORY_PROBLEM;
     }
-    Result result =  init_visitor(new_visitor, visitor_name, visitor_id);
-    if(result != OK){
+    Result result = init_visitor(new_visitor, visitor_name, visitor_id);
+    if (result != OK) {
+        free(new_visitor);
         return result;
     }
+
     //create a new node to the list
     VisitorsList new_node = malloc(sizeof(*new_node));
-    if(new_node == NULL){
+    if (new_node == NULL) {
+        free(new_visitor);
         return MEMORY_PROBLEM;
     }
-    node_ptr->next = new_node;
+    //create a temp node to hold the current newest visitor in the list
+    VisitorsList tmp_node = malloc(sizeof(*tmp_node));
+    if(tmp_node == NULL){
+        free(new_visitor);
+        free(new_node);
+        return MEMORY_PROBLEM;
+    }
+    tmp_node = sys->visitorsListHead->next;
+    sys->visitorsListHead->next = new_node;
     new_node->visitor = new_visitor;
-    new_node->next = NULL;
-
+    new_node->next = tmp_node;
+    free(tmp_node);
     return OK;
+}
+
+/*
+ * finds a room by it's name
+ * returns a ptr to the room
+ */
+static ChallengeRoom *find_room_by_name(ChallengeRoomSystem *sys,
+                                        char *room_name) {
+    assert(sys != NULL && room_name != NULL);
+    for (int i = 0; i < sys->system_num_rooms; ++i) {
+        if (strcmp(sys->system_rooms[i]->name, room_name)) {
+            return sys->system_rooms[i];
+        }
+    }
+    //there is no matching room
+    return NULL;
 }
 
 /*
@@ -241,19 +281,35 @@ Result visitor_arrive(ChallengeRoomSystem *sys, char *room_name, char
     if (sys == NULL) {
         return NULL_PARAMETER;
     }
+    if (start_time < sys->system_curr_time) {
+        return ILLEGAL_TIME;
+    }
+    if (visitor_name == NULL || room_name == NULL) {
+        return ILLEGAL_PARAMETER;
+    }
 
     sys->visitorsListHead = malloc(sizeof(*(sys->visitorsListHead)));
-    if(sys->visitorsListHead == NULL){
+    if (sys->visitorsListHead == NULL) {
         return MEMORY_PROBLEM;
     }
     sys->visitorsListHead->visitor = NULL;
+    sys->visitorsListHead->next = NULL;
 
     Result result = add_visitor_node(sys, visitor_name, visitor_id);
-    if(result != OK){
+    if (result != OK) {
         return result;
     }
 
+    ChallengeRoom *room = find_room_by_name(sys, room_name);
+    if (room == NULL) {
+        return ILLEGAL_PARAMETER;
+    }
 
+    result = visitor_enter_room(room, sys->visitorsListHead->next->visitor,
+                                level, start_time);
+    if (result != OK) {
+        return result;
+    }
     return OK;
 
 }

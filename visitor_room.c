@@ -255,11 +255,11 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
     }
 
     //update the room in the visitor
-    *(visitor->room_name) = malloc(strlen(ptr->challenge->name) + 1);
+    *(visitor->room_name) = malloc(strlen(room->name) + 1);
     if (*(visitor->room_name) == NULL) {
         return MEMORY_PROBLEM;
     }
-    strcpy(*(visitor->room_name), ptr->challenge->name);
+    strcpy(*(visitor->room_name), room->name);
     //update the chosen ChallengeActivity in the room
     room->challenges[challenge_idx].visitor = visitor;
     room->challenges[challenge_idx].start_time = start_time;

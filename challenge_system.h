@@ -18,6 +18,7 @@ typedef struct SChallengeRoomSystem
     int system_num_rooms;
     int system_num_challenges;
     VisitorsList visitorsListHead;
+    int system_curr_time;
 
 } ChallengeRoomSystem;
 
