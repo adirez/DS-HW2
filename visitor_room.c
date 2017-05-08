@@ -246,6 +246,11 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
     if (*(visitor->room_name) != NULL) {
         return ALREADY_IN_ROOM;
     }
+    int places = 0;
+    num_of_free_places_for_level(room, level, &places);
+    if(places == 0){
+        return NO_AVAILABLE_CHALLENGES;
+    }
     int challenge_idx = 0;
     ChallengeActivity *ptr = find_lex_smallest(room, level, &challenge_idx);
 
@@ -291,12 +296,5 @@ Result visitor_quit_room(Visitor *visitor, int quit_time) {
         return NULL_PARAMETER;
     }
 
-    //update Visitor params and free allocated memory
-    free(*(visitor->room_name));
-    *(visitor->room_name) = NULL;
-    visitor->visitor_name = NULL;
-    visitor->current_challenge->visitor = NULL;
-    visitor->current_challenge->start_time = 0;
-    visitor->current_challenge = NULL;
-    return OK;
+    return reset_visitor(visitor);
 }
