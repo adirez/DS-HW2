@@ -75,7 +75,7 @@ static Result create_system_challenges(ChallengeRoomSystem *sys,
     fscanf(input_file, "%d\n", num_challenges);
     //allocates memory for the Challenge's pointer array
     sys->system_challenges = malloc(*num_challenges *
-                                            sizeof(*sys->system_challenges));
+                                    sizeof(*sys->system_challenges));
     if (sys->system_challenges == NULL) {
         free_system_name(sys);
         return MEMORY_PROBLEM;
@@ -203,16 +203,6 @@ Result create_system(char *init_file, ChallengeRoomSystem **sys) {
 Result destroy_system(ChallengeRoomSystem *sys, int destroy_time, char
 **most_popular_challenge_p, char **challenge_best_time);
 
-/*
- * frees any previously allocated memory of the visitors list from the system
- */
-static void destroy_visitor_list(VisitorsList ptr) {
-    while (ptr != NULL){
-        VisitorsList to_delete = ptr;
-        ptr = ptr->next;
-        free(to_delete);
-    }
-}
 
 /*
  * creates a visitor and initialize it
@@ -241,7 +231,7 @@ static Result add_visitor_node(ChallengeRoomSystem *sys, char *visitor_name,
     }
     //create a temp node to hold the current newest visitor in the list
     VisitorsList tmp_node = malloc(sizeof(*tmp_node));
-    if(tmp_node == NULL){
+    if (tmp_node == NULL) {
         free(new_visitor);
         free(new_node);
         return MEMORY_PROBLEM;
@@ -314,27 +304,97 @@ Result visitor_arrive(ChallengeRoomSystem *sys, char *room_name, char
 
 }
 
-Result visitor_quit(ChallengeRoomSystem *sys, int visitor_id, int quit_time);
+/*
+ * frees the allocated memory of a specific node in the list
+ */
+static void destroy_visitor_node(VisitorsList ptr, VisitorsList previous_ptr) {
+    assert(ptr != NULL);
+    VisitorsList tmp_ptr = ptr->next;
+    free(ptr->visitor);
+    free(ptr);
+    previous_ptr->next = tmp_ptr;
+}
 
+/*
+ * gets a visitor out of the system and frees any allocated memory of the
+ * visitor
+ */
+Result visitor_quit(ChallengeRoomSystem *sys, int visitor_id, int quit_time) {
+    assert(sys != NULL);
+    if (sys == NULL) {
+        return NULL_PARAMETER;
+    }
+    if (quit_time < sys->system_curr_time) {
+        return ILLEGAL_TIME;
+    }
 
-Result all_visitors_quit(ChallengeRoomSystem *sys, int quit_time);
+    VisitorsList ptr = sys->visitorsListHead;
+    VisitorsList previous_ptr = NULL;
+
+    while (ptr->visitor->visitor_id != visitor_id) {
+        previous_ptr = ptr;
+        ptr = ptr->next;
+    }
+
+    Result result = visitor_quit_room(ptr->visitor, quit_time);
+    if (result != OK) {
+        return result;
+    }
+
+    destroy_visitor_node(ptr, previous_ptr);
+    return OK;
+}
+
+/*
+ * goes through all the visitor list and does quit to each one of the
+ * visitors and frees any allocated memory of the list
+ */
+Result all_visitors_quit(ChallengeRoomSystem *sys, int quit_time) {
+    assert(sys != NULL);
+    if (sys == NULL) {
+        return NULL_PARAMETER;
+    }
+    if (quit_time < sys->system_curr_time) {
+        return ILLEGAL_TIME;
+    }
+
+    //frees any previously allocated memory of the visitors list from the system
+    VisitorsList ptr = sys->visitorsListHead;
+    while (ptr != NULL) {
+        VisitorsList to_delete = ptr;
+        ptr = ptr->next;
+        Result result = visitor_quit(sys, to_delete->visitor->visitor_id,
+                                     quit_time);
+        if (result != OK) {
+            return result;
+        }
+        free(to_delete);
+    }
+    return OK;
+}
 
 
 Result system_room_of_visitor(ChallengeRoomSystem *sys, char *visitor_name,
                               char **room_name) {
+    assert(sys != NULL);
     if (sys == NULL) {
         return NULL_PARAMETER;
     }
-    if (visitor_name == NULL ||
-        *room_name == NULL) {  //TODO *room_name or room_name?
+    if (visitor_name == NULL) {
         return ILLEGAL_PARAMETER;
     }
-    // struct visitorNode *visitor = sys->visitorNode;
-    while (1) {
-        if (sys->visitorNode->next == NULL) {
-            break;
-        }
 
+    VisitorsList ptr = sys->visitorsListHead->next;
+    while (ptr != NULL) {
+        if (strcmp(ptr->visitor->visitor_name, visitor_name) == 0) {
+            *room_name = malloc(strlen(*(ptr->visitor->room_name)) + 1);
+            if (room_name == NULL){
+                return NULL;
+            }
+            strcpy(*room_name,*(ptr->visitor->room_name));
+            return OK;
+        }
+        ptr = ptr->next;
     }
 
     return OK;
