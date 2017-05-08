@@ -13,12 +13,12 @@ typedef struct SChallengeRoomSystem
 
 #include "challenge_room_system_fields.h"
     char *system_name;
+    int system_curr_time;
     Challenge **system_challenges;
+    int system_num_challenges;
     ChallengeRoom **system_rooms;
     int system_num_rooms;
-    int system_num_challenges;
     VisitorsList visitorsListHead;
-    int system_curr_time;
 
 } ChallengeRoomSystem;
 
