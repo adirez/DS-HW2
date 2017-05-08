@@ -208,6 +208,7 @@ Result visitor_arrive(ChallengeRoomSystem *sys, char *room_name, char
         return NULL_PARAMETER;
     }
     return OK;
+
 }
 
 Result visitor_quit(ChallengeRoomSystem *sys, int visitor_id, int quit_time);
@@ -224,7 +225,11 @@ Result system_room_of_visitor(ChallengeRoomSystem *sys, char *visitor_name,
     if (visitor_name == NULL || *room_name == NULL) {  //TODO *room_name or room_name?
         return ILLEGAL_PARAMETER;
     }
+   // struct visitorNode *visitor = sys->visitorNode;
     while(1) {
+        if (sys->visitorNode->next == NULL) {
+            break;
+        }
 
     }
 
@@ -301,5 +306,37 @@ Result best_time_of_system_challenge(ChallengeRoomSystem *sys,
     return ILLEGAL_PARAMETER;
 }
 
+/*
+ * iterates over all the challenges in the system and returns the most popular challenge
+ * in case there are a few most popular, the function will return the lexicographically smallest one
+ */
+Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name) {
+   if (sys == NULL || *challenge_name == NULL) { //TODO challenge_name or *challenge_name?
+       return NULL_PARAMETER;
+   }
+    int max_idx = 0;
 
-Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name);
+    //iterating over all the challenges in the system and finds the one with highest num of visits
+    //starting from 1 because we set by default the initial minimum to the first challenge
+    for (int i = 1; i < sys->system_num_challenges; ++i) {
+
+        //if the num of visits of the current challenge is higher, it will be the current maximum
+        if (sys->system_challenges[i]->num_visits > sys->system_challenges[max_idx]->num_visits) {
+            max_idx = i;
+
+            //if the num of visits of the current challenge is equal, we will take the lexicographically smaller
+        } else if (sys->system_challenges[i]->num_visits == sys->system_challenges[max_idx]->num_visits) {
+            if (strcmp(sys->system_challenges[i]->name, sys->system_challenges[max_idx]->name) < 0) {
+                max_idx = i;
+            }
+        }
+    }
+
+    //creating a separate copy of the challenge name
+    *challenge_name = malloc(strlen(sys->system_challenges[max_idx]->name) + 1);
+    if (*challenge_name == NULL) {
+        return MEMORY_PROBLEM;
+    }
+    strcpy(*challenge_name, sys->system_challenges[max_idx]->name);
+    return OK;
+}
