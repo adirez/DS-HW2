@@ -27,6 +27,7 @@ static void free_system_name(ChallengeRoomSystem *sys) {
 static void free_system_challenges(ChallengeRoomSystem *sys,
                                    int num_challenges) {
     for (int i = 0; i < num_challenges; ++i) {
+        reset_challenge(sys->system_challenges[i]);
         free(sys->system_challenges[i]);
         //releasing the allocated memory of each challenge
     }
@@ -40,8 +41,7 @@ static void free_system_challenges(ChallengeRoomSystem *sys,
  */
 static void free_system_rooms(ChallengeRoomSystem *sys, int num_rooms) {
     for (int i = 0; i < num_rooms; ++i) {
-        free(sys->system_rooms[i]->name);
-        free(sys->system_rooms[i]->challenges);
+        reset_room(sys->system_rooms[i]);
         //releasing the allocated memory of each room
     }
     free(sys->system_rooms);
@@ -68,7 +68,7 @@ static Result update_system_name(ChallengeRoomSystem *sys, FILE *input_file) {
  * returns the num of challenges through ptr
  */
 static Result create_system_challenges(ChallengeRoomSystem *sys,
-                                       FILE *input_file){
+                                       FILE *input_file) {
     char challenge_name[WORD_MAX_LEN] = "";
     //reads the number of challenges from the file
     fscanf(input_file, "%d\n", &sys->system_num_challenges);
@@ -101,21 +101,8 @@ static Result create_system_challenges(ChallengeRoomSystem *sys,
 /*
  * takes the data of the rooms from the file and updates it to the system
  */
-static Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file) {
+static Result create_system_rooms2(ChallengeRoomSystem *sys, FILE *input_file) {
     char room_name[WORD_MAX_LEN] = "";
-    //reads the num of rooms from the file
-    fscanf(input_file, "%d\n", &sys->system_num_rooms);
-    //allocates memory for the room's ptr array
-    sys->system_rooms = malloc(sys->system_num_rooms * sizeof
-                                                       (*sys->system_rooms));
-    if (sys->system_rooms == NULL) {
-        free_system_name(sys);
-        free_system_challenges(sys, sys->system_num_challenges);
-        //releasing system name and challenges that have been allocated
-        //previously
-        return NULL_PARAMETER;
-    }
-
     //goes through each room
     for (int i = 0; i < sys->system_num_rooms; ++i) {
         int num_challenges_in_room = 0;
@@ -166,7 +153,24 @@ static Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file) {
     return OK;
 }
 
-static Result create_system_visitor_list_head(ChallengeRoomSystem *sys){
+static Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file){
+    char room_name[WORD_MAX_LEN] = "";
+    //reads the num of rooms from the file
+    fscanf(input_file, "%d\n", &sys->system_num_rooms);
+    //allocates memory for the room's ptr array
+    sys->system_rooms = malloc(sys->system_num_rooms * sizeof
+    (*sys->system_rooms));
+    if (sys->system_rooms == NULL) {
+        free_system_name(sys);
+        free_system_challenges(sys, sys->system_num_challenges);
+        //releasing system name and challenges that have been allocated
+        //previously
+        return NULL_PARAMETER;
+    }
+    return create_system_rooms2(sys, input_file);
+}
+
+static Result create_system_visitor_list_head(ChallengeRoomSystem *sys) {
     sys->visitorsListHead = malloc(sizeof((sys->visitorsListHead)));
     if (sys->visitorsListHead == NULL) {
         return MEMORY_PROBLEM;
@@ -175,6 +179,13 @@ static Result create_system_visitor_list_head(ChallengeRoomSystem *sys){
     sys->visitorsListHead->next = NULL;
     return OK;
 }
+
+/*
+ * creates the whole system according to the data written in the file given
+ * by the user.
+ * the function allocates memory for all the fields in the type
+ * ChallengeRoomSystem
+ */
 
 Result create_system(char *init_file, ChallengeRoomSystem **sys) {
     assert(init_file != NULL || (*sys) != NULL);
@@ -309,7 +320,7 @@ Result visitor_arrive(ChallengeRoomSystem *sys, char *room_name, char
 static void destroy_visitor_node(VisitorsList ptr, VisitorsList previous_ptr) {
     assert(ptr != NULL);
     VisitorsList tmp_ptr = ptr->next;
-    free(ptr->visitor);
+    reset_visitor(ptr->visitor);
     free(ptr);
     previous_ptr->next = tmp_ptr;
 }
@@ -386,15 +397,9 @@ Result system_room_of_visitor(ChallengeRoomSystem *sys, char *visitor_name,
     VisitorsList ptr = sys->visitorsListHead->next;
     while (ptr != NULL) {
         if (strcmp(ptr->visitor->visitor_name, visitor_name) == 0) {
-            if (ptr->visitor->room_name != NULL){
-                *room_name = malloc(strlen(*(ptr->visitor->room_name)) + 1);
-                if (*room_name == NULL) {
-                    return MEMORY_PROBLEM;
-                }
-                strcpy(*room_name, *(ptr->visitor->room_name));
-                return OK;
-            }
-            return NOT_IN_ROOM;
+            Result result = room_of_visitor(ptr->visitor, room_name);
+
+            return result;
         }
         ptr = ptr->next;
     }
@@ -457,6 +462,7 @@ Result change_system_room_name(ChallengeRoomSystem *sys, char *current_name,
  */
 Result best_time_of_system_challenge(ChallengeRoomSystem *sys,
                                      char *challenge_name, int *time) {
+    assert(sys != NULL || challenge_name != NULL || time != NULL);
     if (sys == NULL || challenge_name == NULL || time == NULL) {
         return NULL_PARAMETER;
     }
@@ -481,27 +487,29 @@ Result best_time_of_system_challenge(ChallengeRoomSystem *sys,
  * function will return the lexicographically smallest one
  */
 Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name) {
-    if (sys == NULL ||
-        *challenge_name == NULL) { //TODO challenge_name or *challenge_name?
+    assert(sys != NULL || *challenge_name != NULL);
+    if (sys == NULL || *challenge_name == NULL) { //TODO challenge_name or *challenge_name?
         return NULL_PARAMETER;
     }
-    int max_idx = 0;
+    int max_idx = 0, max = 0, curr = 0;
 
     //iterating over all the challenges in the system and finds the one
     //with highest num of visits starting from 1 because we set by default
-    // the initial minimum to the first challenge
+    //the initial minimum to the first challenge
     for (int i = 1; i < sys->system_num_challenges; ++i) {
 
         //if the num of visits of the current challenge is higher,
         //it will be the current maximum
-        if (sys->system_challenges[i]->num_visits >
-            sys->system_challenges[max_idx]->num_visits) {
+        Result result = num_visits(sys->system_challenges[i], &curr);
+        if(result != OK){
+            return result;
+        }
+        if (curr > max) {
             max_idx = i;
-
+            max = curr;
             //if the num of visits of the current challenge is equal,
             //we will take the lexicographically smaller
-        } else if (sys->system_challenges[i]->num_visits ==
-                   sys->system_challenges[max_idx]->num_visits) {
+        } else if (curr == max) {
             if (strcmp(sys->system_challenges[i]->name,
                        sys->system_challenges[max_idx]->name) < 0) {
                 max_idx = i;
