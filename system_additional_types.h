@@ -13,4 +13,5 @@ typedef struct SVisitorsList {
     struct SVisitorsList *next;
 } *VisitorsList;
 
+
 #endif //ESCAPY_SYSTEM_ADDITIONAL_TYPES_H
