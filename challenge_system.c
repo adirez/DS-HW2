@@ -154,7 +154,6 @@ static Result create_system_rooms2(ChallengeRoomSystem *sys, FILE *input_file) {
 }
 
 static Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file){
-    char room_name[WORD_MAX_LEN] = "";
     //reads the num of rooms from the file
     fscanf(input_file, "%d\n", &sys->system_num_rooms);
     //allocates memory for the room's ptr array
@@ -256,11 +255,12 @@ static Result find_challenge_best_time (ChallengeRoomSystem *sys,
         }
     }
     *time = best_time;
-    *challenge_best_time = realloc(*challenge_best_time,
+    char *tmp_ptr = realloc(*challenge_best_time,
                                    strlen(sys->system_challenges[max_i]->name));
-    if (*challenge_best_time == NULL) {
+    if (tmp_ptr == NULL) {
         return MEMORY_PROBLEM;
     }
+    *challenge_best_time = tmp_ptr;
     return OK;
 }
 
@@ -309,27 +309,27 @@ static Result add_visitor_node(ChallengeRoomSystem *sys, char *visitor_name,
                                int visitor_id) {
     assert(sys != NULL && visitor != NULL);
     //create and initialize a new visitor
-    Visitor *new_visitor = malloc(sizeof(*new_visitor));
+    Visitor **new_visitor = malloc(sizeof(*new_visitor));
     if (new_visitor == NULL) {
         return MEMORY_PROBLEM;
     }
-    Result result = init_visitor(new_visitor, visitor_name, visitor_id);
+    Result result = init_visitor(*new_visitor, visitor_name, visitor_id);
     if (result != OK) {
         free(new_visitor);
         return result;
     }
 
     //create a new node to the list
-    VisitorsList new_node = malloc(sizeof(new_node));
+    VisitorsList *new_node = malloc(sizeof(*new_node));
     if (new_node == NULL) {
         free(new_visitor);
         return MEMORY_PROBLEM;
     }
     //create a temp node to hold the current newest visitor in the list
     VisitorsList tmp_node = sys->visitorsListHead->next;
-    sys->visitorsListHead->next = new_node;
-    new_node->visitor = new_visitor;
-    new_node->next = tmp_node;
+    sys->visitorsListHead->next = *new_node;
+    (*new_node)->visitor = *new_visitor;
+    (*new_node)->next = tmp_node;
     return OK;
 }
 
@@ -396,6 +396,7 @@ static void destroy_visitor_node(VisitorsList ptr, VisitorsList previous_ptr) {
     assert(ptr != NULL);
     VisitorsList tmp_ptr = ptr->next;
     reset_visitor(ptr->visitor);
+    free(ptr->visitor);
     free(ptr);
     previous_ptr->next = tmp_ptr;
 }
@@ -598,11 +599,16 @@ Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name) {
         }
     }
 
-    //creating a separate copy of the challenge name
-    *challenge_name = malloc(strlen(sys->system_challenges[max_idx]->name) + 1);
-    if (*challenge_name == NULL) {
-        return MEMORY_PROBLEM;
+    if (max == 0) {
+        *challenge_name = NULL;
+    } else {
+        //creating a separate copy of the challenge name
+        *challenge_name = malloc(
+                strlen(sys->system_challenges[max_idx]->name) + 1);
+        if (*challenge_name == NULL) {
+            return MEMORY_PROBLEM;
+        }
+        strcpy(*challenge_name, sys->system_challenges[max_idx]->name);
     }
-    strcpy(*challenge_name, sys->system_challenges[max_idx]->name);
     return OK;
 }
