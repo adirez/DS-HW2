@@ -67,7 +67,6 @@ Result init_visitor(Visitor *visitor, char *name, int id) {
     strcpy(visitor->visitor_name, name);
 
     visitor->visitor_id = id;
-    *(visitor->room_name) = NULL; //TODO: might be a problem?
     visitor->room_name = NULL;
     visitor->current_challenge = NULL;
     return OK;

@@ -8,7 +8,6 @@
 #include <string.h>
 #include <assert.h>
 
-
 #include "challenge_system.h"
 
 #define WORD_MAX_LEN 51
@@ -77,10 +76,6 @@ static Result update_system_name(ChallengeRoomSystem *sys, FILE *input_file) {
     return OK;
 }
 
-/*
- * takes the data of the challenges from the file and updates it to the system
- * returns the num of challenges through ptr
- */
 /**
  * creates the challenges array in the system
  * @param sys - ptr to the system
@@ -111,6 +106,7 @@ static Result create_system_challenges(ChallengeRoomSystem *sys,
     }
     return OK;
 }
+
 /**
  * finds the right challenge by id and initialize the activity accordingly
  * @param sys - ptr to the system
@@ -189,6 +185,7 @@ static Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file) {
     }
     return rooms_add_challenge_activities(sys, input_file);
 }
+
 /**
  * creates the head of the head of the linked list of visitors
  * @param sys - ptr to the system
@@ -205,8 +202,6 @@ static Result create_system_visitor_list_head(ChallengeRoomSystem *sys) {
     return OK;
 }
 
-
-
 /**
  * creates the system according to the specifications from the file
  * @param init_file - the file with all the specifications
@@ -215,13 +210,11 @@ static Result create_system_visitor_list_head(ChallengeRoomSystem *sys) {
  *         MEMORY_PROBLEM: if allocation problems have occurred
  *         OK: if everything went well
  */
-
-
 Result create_system(char *init_file, ChallengeRoomSystem **sys) {
     if (init_file == NULL || sys == NULL) {
         return NULL_PARAMETER;
     }
-    (*sys) = malloc(sizeof((*sys)));
+    (*sys) = malloc(sizeof(*sys));
     (*sys)->system_curr_time = 0;
     (*sys)->system_num_rooms = 0;
     (*sys)->system_num_challenges = 0;
@@ -326,27 +319,28 @@ static Result add_visitor_node(ChallengeRoomSystem *sys, char *visitor_name,
                                int visitor_id) {
     assert(sys != NULL && visitor != NULL);
     //create and initialize a new visitor
-    Visitor **new_visitor = malloc(sizeof(*new_visitor));
+    Visitor *new_visitor = malloc(sizeof(*new_visitor));
     if (new_visitor == NULL) {
         return MEMORY_PROBLEM;
     }
-    Result result = init_visitor(*new_visitor, visitor_name, visitor_id);
+    Result result = init_visitor(new_visitor, visitor_name, visitor_id);
     if (result != OK) {
         free(new_visitor);
         return result;
     }
 
     //create a new node to the list
-    VisitorsList *new_node = malloc(sizeof(*new_node));
+    VisitorsList new_node = malloc(sizeof(*new_node));
     if (new_node == NULL) {
+        reset_visitor(new_visitor);
         free(new_visitor);
         return MEMORY_PROBLEM;
     }
     //create a temp node to hold the current newest visitor in the list
     VisitorsList tmp_node = sys->visitorsListHead->next;
-    sys->visitorsListHead->next = *new_node;
-    (*new_node)->visitor = *new_visitor;
-    (*new_node)->next = tmp_node;
+    sys->visitorsListHead->next = new_node;
+    new_node->visitor = new_visitor;
+    new_node->next = tmp_node;
     return OK;
 }
 
