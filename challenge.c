@@ -10,15 +10,21 @@
 
 #include "challenge.h"
 
-/*
- * initializes the challenge type given by the user
+/**
+ * initializes all the fields of a 'Challenge' data type.
+ * @param challenge - ptr to a data type 'challenge' to initialize
+ * @param id - value is inserted to challenge
+ * @param name - allocates and duplicate the name to the challenge
+ * @param level - value is inserted to challenge
+ *        best_time & num_visits are initialized to 0
+ * @return NULL_PARAMETER: if the ptr to challenge or name are NULL
+ *         MEMORY_PROBLEM: if allocation problems for name have occurred
+ *         OK: if everything went well
  */
 Result init_challenge(Challenge *challenge, int id, char *name, Level level) {
-    assert(challenge != NULL && name != NULL);
     if (challenge == NULL || name == NULL) {
         return NULL_PARAMETER;
     }
-    //allocates new memory for the name and copies it
     challenge->name = malloc(strlen(name) + 1);
     if (challenge->name == NULL) {
         return MEMORY_PROBLEM;
@@ -32,11 +38,13 @@ Result init_challenge(Challenge *challenge, int id, char *name, Level level) {
     return OK;
 }
 
-/*
- * resets all the params of challenge
+/**
+ * resets all the fields of challenge, frees name previously allocated memory.
+ * @param challenge - ptr to a data type 'challenge' for reset
+ * @return NULL_PARAMETER: if the ptr to challenge is NULL
+ *         OK: if everything went well
  */
 Result reset_challenge(Challenge *challenge) {
-    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }
@@ -49,11 +57,15 @@ Result reset_challenge(Challenge *challenge) {
     return OK;
 }
 
-/*
- * changes the name of the challenge
+/**
+ * changes the name field of a challenge.
+ * @param challenge - ptr to the data type 'challenge'
+ * @param name - wanted name for the challenge
+ * @return NULL_PARAMETER: if the ptr to challenge or name are NULL
+ *         MEMORY_PROBLEM: if allocation problems for name have occurred
+ *         OK: if everything went well
  */
 Result change_name(Challenge *challenge, char *name) {
-    assert(challenge != NULL || name != NULL);
     if (challenge == NULL || name == NULL) {
         return NULL_PARAMETER;
     }
@@ -67,21 +79,23 @@ Result change_name(Challenge *challenge, char *name) {
     return OK;
 }
 
-/*
- * sets the best time to be the time given by the user
+/**
+ * set the best time of a challenge.
+ * @param challenge - ptr to the data type 'challenge'
+ * @param time - the wanted value for best time
+ * @return NULL_PARAMETER: if the ptr to challenge is NULL
+ *         ILLEGAL_PARAMETER: if time is negative or worse than current best
+ *         OK: if everything went well
  */
 Result set_best_time_of_challenge(Challenge *challenge, int time) {
-    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }
     //when best time is set to 0 it means that there were no visitors yet
-    //if the time is legal (meaning not negative) set it as the best time
     if (time >= 0 && time <= challenge->best_time) {
         challenge->best_time = time;
         return OK;
     }
-    //if time is negative or it's not better than the current best time
     if (time < 0 || time > challenge->best_time) {
         return ILLEGAL_PARAMETER;
     }
@@ -89,11 +103,14 @@ Result set_best_time_of_challenge(Challenge *challenge, int time) {
     return OK;
 }
 
-/*
- * returns the best time through ptr
+/**
+ * returns the best time through ptr.
+ * @param challenge - ptr to the data type 'challenge'
+ * @param time - the ptr that needs to be updated
+ * @return NULL_PARAMETER: if the ptr to challenge is NULL
+ *         OK: if everything went well
  */
 Result best_time_of_challenge(Challenge *challenge, int *time) {
-    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }
@@ -101,11 +118,13 @@ Result best_time_of_challenge(Challenge *challenge, int *time) {
     return OK;
 }
 
-/*
- * increases the num of visits by 1
+/**
+ * increases the num of visits by 1.
+ * @param challenge - ptr to the data type 'challenge'
+ * @return NULL_PARAMETER: if the ptr to challenge is NULL
+ *         OK: if everything went well
  */
 Result inc_num_visits(Challenge *challenge) {
-    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }
@@ -113,11 +132,14 @@ Result inc_num_visits(Challenge *challenge) {
     return OK;
 }
 
-/*
- * returns the num of visits through ptr
+/**
+ * returns the num of visits through ptr.
+ * @param challenge  - ptr to the data type 'challenge'
+ * @param visits - the ptr that needs to be updated
+ * @return NULL_PARAMETER: if the ptr to challenge is NULL
+ *         OK: if everything went well
  */
 Result num_visits(Challenge *challenge, int *visits) {
-    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }
