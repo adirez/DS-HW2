@@ -14,9 +14,9 @@ typedef struct SChallengeRoomSystem
 #include "challenge_room_system_fields.h"
     char *system_name;
     int system_curr_time;
-    Challenge **system_challenges;
+    Challenge *system_challenges;
     int system_num_challenges;
-    ChallengeRoom **system_rooms;
+    ChallengeRoom *system_rooms;
     int system_num_rooms;
     VisitorsList visitorsListHead;
 

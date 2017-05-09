@@ -313,7 +313,6 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
     assert(challenge_idx != 0);
 
     return visitor_update_fields(room, visitor, challenge_idx, start_time);
-
 }
 
 /**

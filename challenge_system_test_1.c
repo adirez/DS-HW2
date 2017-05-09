@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     ChallengeRoomSystem *sys=NULL;
     Result r=OK;
 
-    r=create_system("C:\\Users\\Shahak\\CLionProjects\\HW2\\test_1.txt", &sys);
+    r=create_system("C:\\Adi\\Documents\\Technion\\Semester2\\MTM\\HW\\HW2\\Escapy\\test_1.txt", &sys);
 
     r=visitor_arrive(sys, "room_2", "visitor_1", 201, Medium, 5);
 
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
     ASSERT("1.13" , time==2)
 
     char *most_popular_challenge=NULL, *challenge_best_time=NULL;
-//    r=destroy_system(sys, 18, &most_popular_challenge, &challenge_best_time);
+    r=destroy_system(sys, 18, &most_popular_challenge, &challenge_best_time);
     ASSERT("1.14" , most_popular_challenge!=NULL && strcmp(most_popular_challenge, "challenge_1111")==0)
     ASSERT("1.15" , challenge_best_time!=NULL && strcmp(challenge_best_time, "challenge_4")==0)
 

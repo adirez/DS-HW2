@@ -49,8 +49,12 @@ static void free_system_rooms(ChallengeRoomSystem *sys, int num_rooms) {
     return;
 }
 
-/*
- * Reads the name from the file and updates it in the system
+/**
+ * updates the name field in the system
+ * @param sys - ptr to the system
+ * @param input_file - the file with the wanted name
+ * @return MEMORY_PROBLEM: if allocation problems for name have occurred
+ *         OK: if everything went well
  */
 static Result update_system_name(ChallengeRoomSystem *sys, FILE *input_file) {
     char name[WORD_MAX_LEN] = "";
@@ -67,6 +71,7 @@ static Result update_system_name(ChallengeRoomSystem *sys, FILE *input_file) {
  * takes the data of the challenges from the file and updates it to the system
  * returns the num of challenges through ptr
  */
+
 static Result create_system_challenges(ChallengeRoomSystem *sys,
                                        FILE *input_file) {
     char challenge_name[WORD_MAX_LEN] = "";
@@ -179,18 +184,19 @@ static Result create_system_visitor_list_head(ChallengeRoomSystem *sys) {
     return OK;
 }
 
-/*
- * creates the whole system according to the data written in the file given
- * by the user.
- * the function allocates memory for all the fields in the type
- * ChallengeRoomSystem
+/**
+ * creates the system according to the specifications from the file
+ * @param init_file - the file with all the specifications
+ * @param sys - ptr to a data type 'ChallengeRoomSystem' for creation
+ * @return NULL_PARAMETER: if the ptr to sys or init_file are NULL
+ *         MEMORY_PROBLEM: if allocation problems have occurred
+ *         OK: if everything went well
  */
-
 Result create_system(char *init_file, ChallengeRoomSystem **sys) {
-    assert(init_file != NULL || (*sys) != NULL);
-    if (init_file == NULL || (*sys) == NULL) {
+    if (init_file == NULL || sys == NULL) {
         return NULL_PARAMETER;
     }
+    (*sys) = malloc(sizeof((*sys)));
     (*sys)->system_curr_time = 0;
     (*sys)->system_num_rooms = 0;
     (*sys)->system_num_challenges = 0;
@@ -198,30 +204,30 @@ Result create_system(char *init_file, ChallengeRoomSystem **sys) {
     if (input == NULL) {
         return MEMORY_PROBLEM; //TODO not sure if that's the right Error
     }
-
     Result result = update_system_name(*sys, input);
     if (result != OK) {
         fclose(input);
+        free((*sys));
         return result;
     }
-
     result = create_system_challenges(*sys, input);
     if (result != OK) {
         fclose(input);
+        free((*sys));
         return result;
     }
-
     result = create_system_rooms(*sys, input);
     if (result != OK) {
         fclose(input);
+        free((*sys));
         return result;
     }
     result = create_system_visitor_list_head(*sys);
     if (result != OK) {
         fclose(input);
+        free((*sys));
         return result;
     }
-
     fclose(input);
     return OK;
 }
