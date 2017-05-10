@@ -12,12 +12,55 @@
 
 #define WORD_MAX_LEN 51
 
-#define RESULT_CHECK(result)\
-    if(result != OK){\
+#define CREATE_RESULT_CHECK(result)\
+    if (result != OK){\
         fclose(input);\
         free((*sys));\
         return result;\
     }
+#define RESULT_STANDARD_CHECK(result)\
+    if (result != OK){\
+        return result;\
+    }
+
+/* deceleration for static functions */
+static void free_system_name(ChallengeRoomSystem *sys);
+
+static void free_system_name(ChallengeRoomSystem *sys);
+
+static void free_system_challenges_and_previous(ChallengeRoomSystem *sys);
+
+static void free_system_rooms_and_previous(ChallengeRoomSystem *sys);
+
+static Result update_system_name(ChallengeRoomSystem *sys, FILE *input_file);
+
+static Result create_system_challenges(ChallengeRoomSystem *sys,
+                                       FILE *input_file);
+
+static Result add_challenge_to_room(ChallengeRoomSystem *sys, int challenge_id,
+                                    int activity_idx);
+
+static Result rooms_add_challenge_activities(ChallengeRoomSystem *sys,
+                                             FILE *input_file);
+
+static Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file);
+
+static Result create_system_visitor_list_head(ChallengeRoomSystem *sys);
+
+static Result find_challenge_best_time(ChallengeRoomSystem *sys,
+                                       char **challenge_best_time,
+                                       int *time);
+
+static void destroy_visitor_node(ChallengeRoomSystem *sys, Visitor *visitor);
+
+static Result find_visitor_by_id(ChallengeRoomSystem *sys, Visitor *visitor,
+                                 int visitor_id);
+
+static Result create_visitor_node(ChallengeRoomSystem *sys, char *visitor_name,
+                                  int visitor_id);
+
+static Result find_room_by_name(ChallengeRoomSystem *sys, char *room_name,
+                                int *room_idx);
 
 /**
  * free the allocated memory of the system
@@ -120,7 +163,9 @@ static Result add_challenge_to_room(ChallengeRoomSystem *sys, int challenge_id,
     for (int i = 0; i < sys->system_num_challenges; ++i) {
         if ((sys->system_challenges + i)->id == challenge_id) {
             Result result = init_challenge_activity(((sys->system_rooms)
-                      ->challenges + activity_idx), sys->system_challenges + i);
+                                                             ->challenges +
+                                                     activity_idx),
+                                                    sys->system_challenges + i);
             if (result != OK) {
                 free_system_rooms_and_previous(sys);
                 return result;
@@ -193,12 +238,12 @@ static Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file) {
  *         OK: if everything went well
  */
 static Result create_system_visitor_list_head(ChallengeRoomSystem *sys) {
-    sys->visitorsListHead = malloc(sizeof(*(sys->visitorsListHead)));
-    if (sys->visitorsListHead == NULL) {
+    sys->visitors_list_head = malloc(sizeof(*(sys->visitors_list_head)));
+    if (sys->visitors_list_head == NULL) {
         return MEMORY_PROBLEM;
     }
-    sys->visitorsListHead->visitor = NULL;
-    sys->visitorsListHead->next = NULL;
+    sys->visitors_list_head->visitor = NULL;
+    sys->visitors_list_head->next = NULL;
     return OK;
 }
 
@@ -215,7 +260,7 @@ Result create_system(char *init_file, ChallengeRoomSystem **sys) {
         return NULL_PARAMETER;
     }
     (*sys) = malloc(sizeof(*sys));
-    (*sys)->system_curr_time = 0;
+    (*sys)->system_last_known_time = 0;
     (*sys)->system_num_rooms = 0;
     (*sys)->system_num_challenges = 0;
     FILE *input = fopen(init_file, "r");
@@ -223,13 +268,13 @@ Result create_system(char *init_file, ChallengeRoomSystem **sys) {
         return MEMORY_PROBLEM; //TODO not sure if that's the right Error
     }
     Result result = update_system_name(*sys, input);
-    RESULT_CHECK(result);
+    CREATE_RESULT_CHECK(result);
     result = create_system_challenges(*sys, input);
-    RESULT_CHECK(result);
+    CREATE_RESULT_CHECK(result);
     result = create_system_rooms(*sys, input);
-    RESULT_CHECK(result);
+    CREATE_RESULT_CHECK(result);
     result = create_system_visitor_list_head(*sys);
-    RESULT_CHECK(result);
+    CREATE_RESULT_CHECK(result);
     fclose(input);
     return OK;
 }
@@ -250,9 +295,7 @@ static Result find_challenge_best_time(ChallengeRoomSystem *sys,
                                                (sys->system_challenges + i)
                                                        ->name,
                                                &tmp_time);
-        if (result != OK) {
-            return result;
-        }
+        RESULT_STANDARD_CHECK(result);
         if (tmp_time > 0 && tmp_time < best_time) {
             best_time = tmp_time;
             max_i = i;
@@ -282,25 +325,19 @@ Result destroy_system(ChallengeRoomSystem *sys, int destroy_time, char
         *challenge_best_time == NULL) {
         return NULL_PARAMETER;
     }
-    if (destroy_time < sys->system_curr_time) {
+    if (destroy_time < sys->system_last_known_time) {
         return ILLEGAL_TIME;
     }
     Result result = all_visitors_quit(sys, destroy_time);
-    if (result != OK) {
-        return result;
-    }
+    RESULT_STANDARD_CHECK(result);
     free(*most_popular_challenge_p);
     result = most_popular_challenge(sys, most_popular_challenge_p);
-    if (result != OK) {
-        return result;
-    }
+    RESULT_STANDARD_CHECK(result);
 
     //no need to free because we used realloc in the func
     int best_time = 0;
     result = find_challenge_best_time(sys, challenge_best_time, &best_time);
-    if (result != OK) {
-        return result;
-    }
+    RESULT_STANDARD_CHECK(result);
 
     //if the best time is 0, it means no visitors have done any challenges
     if (best_time == 0) {
@@ -310,175 +347,211 @@ Result destroy_system(ChallengeRoomSystem *sys, int destroy_time, char
     return OK;
 }
 
-/*
- * creates a visitor and initialize it
- * then creates a new node to the visitors list in the system and adds the
- * new visitor to the list
+/**
+ * creates a new node to the visitor list
+ * initialize the new visitor
+ * @param sys - ptr to the system
+ * @param visitor_name - the name of the visitor
+ * @param visitor_id - the id of the visitor
+ * @return MEMORY_PROBLEM: if allocation problems have occurred
+ *         OK: if everything went well
  */
-static Result add_visitor_node(ChallengeRoomSystem *sys, char *visitor_name,
-                               int visitor_id) {
-    assert(sys != NULL && visitor != NULL);
-    //create and initialize a new visitor
-    Visitor *new_visitor = malloc(sizeof(*new_visitor));
-    if (new_visitor == NULL) {
-        return MEMORY_PROBLEM;
-    }
-    Result result = init_visitor(new_visitor, visitor_name, visitor_id);
-    if (result != OK) {
-        free(new_visitor);
-        return result;
-    }
-
-    //create a new node to the list
+static Result create_visitor_node(ChallengeRoomSystem *sys, char *visitor_name,
+                                  int visitor_id) {
+    assert(sys != NULL);
     VisitorsList new_node = malloc(sizeof(*new_node));
     if (new_node == NULL) {
-        reset_visitor(new_visitor);
-        free(new_visitor);
         return MEMORY_PROBLEM;
     }
-    //create a temp node to hold the current newest visitor in the list
-    VisitorsList tmp_node = sys->visitorsListHead->next;
-    sys->visitorsListHead->next = new_node;
-    new_node->visitor = new_visitor;
+    new_node->visitor = malloc(sizeof(*new_node->visitor));
+    if(new_node->visitor == NULL){
+        free(new_node);
+        return MEMORY_PROBLEM;
+    }
+    Result result = init_visitor(new_node->visitor, visitor_name, visitor_id);
+    if (result != OK) {
+        free(new_node);
+        return result;
+    }
+    VisitorsList tmp_node = sys->visitors_list_head->next;
+    sys->visitors_list_head->next = new_node;
     new_node->next = tmp_node;
     return OK;
 }
 
-/*
- * finds a room by it's name
- * returns a ptr to the room
+/**
+ * finds a room by its name
+ * @param sys - ptr to the system
+ * @param room_name - the name of the wanted room
+ * @param room_idx - ptr to the room's idx
+ * @return ILLEGAL_PARAMETER: if a challenge with the name given is not found
+ *         OK: if everything went well
  */
-static ChallengeRoom *find_room_by_name(ChallengeRoomSystem *sys,
-                                        char *room_name) {
-    assert(sys != NULL && room_name != NULL);
+static Result find_room_by_name(ChallengeRoomSystem *sys, char *room_name,
+                                int *room_idx) {
+    assert(sys != NULL && room_name != NULL && room_idx != NULL);
     for (int i = 0; i < sys->system_num_rooms; ++i) {
         if (strcmp((sys->system_rooms + i)->name, room_name)) {
-            return sys->system_rooms + i;
+            *room_idx = i;
+            return OK;
         }
     }
-    //there is no matching room
-    return NULL;
+    return ILLEGAL_PARAMETER;
 }
 
-/*
- * receives details of a visitor, the room he chose, the start time and level
- * he's interested in. checks if there's a suitable challenge in the asked room
- * and updates the system accordingly
+/**
+ * resets and frees the allocated memory of a visitor and its node in the list
+ * @param sys - ptr to the system
+ * @param visitor - the wanted visitor to be destroyed
  */
-Result visitor_arrive(ChallengeRoomSystem *sys, char *room_name, char
-*visitor_name, int visitor_id, Level level, int start_time) {
-    assert(sys != NULL);
+static void destroy_visitor_node(ChallengeRoomSystem *sys, Visitor *visitor) {
+    assert(sys != NULL && visitor != NULL);
+    VisitorsList ptr = sys->visitors_list_head;
+    while (ptr->next != NULL && ptr->next->visitor != visitor) {
+        ptr = ptr->next;
+    }
+    VisitorsList tmp_node = ptr->next->next;
+    reset_visitor(ptr->next->visitor);
+    free(ptr->next);
+    ptr->next = tmp_node;
+}
+
+/**
+ * receives a request of a visitor to enter a room in a requested level
+ * if the visitor is not in the system yet it adds the visitor to the system
+ * updates the system accordingly
+ * @param sys - ptr to the system
+ * @param room_name - the room the visitor wants to enter
+ * @param visitor_name - the name of the visitor
+ * @param visitor_id - the id of the visitor
+ * @param level - the wanted challenge level
+ * @param start_time - the current time
+ * @return NULL_PARAMETER: if the ptr to sys is NULL
+ *         ILLEGAL_TIME: if the start_time is not greater or equal than the
+ *                       last time known to the system
+ *         ILLEGAL_PARAMETER: if room or visitor are NULL
+ *         MEMORY_PROBLEM: if allocation problems have occurred
+ *         ALREADY_IN_ROOM: if the visitor is already in a room
+ *         NO_AVAILABLE_CHALLENGES: if there are no available matching
+ *                                  challenges in the room
+ *         OK: if everything went well
+ */
+Result visitor_arrive(ChallengeRoomSystem *sys, char *room_name,
+                      char *visitor_name, int visitor_id, Level level,
+                      int start_time) {
     if (sys == NULL) {
         return NULL_PARAMETER;
     }
-    if (start_time < sys->system_curr_time) {
+    if (start_time < sys->system_last_known_time) {
         return ILLEGAL_TIME;
     }
     if (visitor_name == NULL || room_name == NULL) {
         return ILLEGAL_PARAMETER;
     }
-
-    Result result = add_visitor_node(sys, visitor_name, visitor_id);
+    Visitor *visitor = NULL;
+    Result result = find_visitor_by_id(sys, visitor, visitor_id);
     if (result != OK) {
+        result = create_visitor_node(sys, visitor_name, visitor_id);
+        RESULT_STANDARD_CHECK(result);
+    } else {
+        assert(visitor != NULL);
+        if (*(visitor->room_name) != NULL) {
+            return ALREADY_IN_ROOM;
+        }
+    }
+    int room_idx = 0;
+    result = find_room_by_name(sys, room_name, &room_idx);
+    if (result != OK) {
+        destroy_visitor_node(sys, sys->visitors_list_head->next->visitor);
         return result;
     }
-
-    ChallengeRoom *room = find_room_by_name(sys, room_name);
-    if (room == NULL) {
-        return ILLEGAL_PARAMETER;
-    }
-
-    result = visitor_enter_room(room, sys->visitorsListHead->next->visitor,
+    result = visitor_enter_room(sys->system_rooms + room_idx,
+                                sys->visitors_list_head->next->visitor,
                                 level, start_time);
     if (result != OK) {
+        destroy_visitor_node(sys, sys->visitors_list_head->next->visitor);
         return result;
     }
-    if (start_time > sys->system_curr_time) {
-        sys->system_curr_time = start_time;
-    }
+    sys->system_last_known_time = start_time;
     return OK;
-
 }
 
-/*
- * frees the allocated memory of a specific node in the list
+/**
+ * finds a visitor by its id and returns a ptr to it
+ * @param sys - ptr to the system
+ * @param visitor - the ptr that needs to be updated
+ * @param visitor_id - the id of the wanted visitor
+ * @return ILLEGAL_PARAMETER: if the visitor is not it the system yet
+ *         OK: if everything went well
  */
-static void destroy_visitor_node(VisitorsList ptr, VisitorsList previous_ptr) {
-    assert(ptr != NULL);
-    VisitorsList tmp_ptr = ptr->next;
-    reset_visitor(ptr->visitor);
-    free(ptr->visitor);
-    free(ptr);
-    previous_ptr->next = tmp_ptr;
+static Result find_visitor_by_id(ChallengeRoomSystem *sys, Visitor *visitor,
+                                 int visitor_id) {
+    assert(sys != NULL && visitor == NULL);
+    VisitorsList ptr = sys->visitors_list_head->next;
+    while (ptr != NULL && ptr->visitor->visitor_id != visitor_id) {
+        ptr = ptr->next;
+    }
+    if (ptr == NULL) {
+        return ILLEGAL_PARAMETER;
+    } else {
+        visitor = ptr->visitor;
+        return OK;
+    }
 }
 
-/*
- * gets a visitor out of the system and frees any allocated memory of the
- * visitor
+/**
+ * updates the system when a visitor is getting out of a room
+ * @param sys - ptr to the system
+ * @param visitor_id - the id of the visitor
+ * @param quit_time - the current time
+ * @return NULL_PARAMETER: if the ptr to sys is NULL
+ *         ILLEGAL_TIME: if the quit_time is not greater or equal than the
+ *                       last time known to the system
+ *         MEMORY_PROBLEM: if allocation problems have occurred
+ *         NOT_IN_ROOM: if the visitor is not in a room
+ *         OK: if everything went well
  */
 Result visitor_quit(ChallengeRoomSystem *sys, int visitor_id, int quit_time) {
-    assert(sys != NULL);
+    //TODO might be MEMORY_PROBLEM???
     if (sys == NULL) {
         return NULL_PARAMETER;
     }
-    if (quit_time < sys->system_curr_time) {
+    if (quit_time < sys->system_last_known_time) {
         return ILLEGAL_TIME;
     }
-
-    VisitorsList ptr = sys->visitorsListHead;
-    VisitorsList previous_ptr = NULL;
-
-    while (ptr->next != NULL && ptr->visitor->visitor_id != visitor_id) {//TODO:
-        previous_ptr = ptr;
-        ptr = ptr->next;
-    }
-
-    Result result = visitor_quit_room(ptr->visitor, quit_time);
-    if (result != OK) {
-        return result;
-    }
-
-    destroy_visitor_node(ptr, previous_ptr);
-    if (quit_time > sys->system_curr_time) {
-        sys->system_curr_time = quit_time;
-    }
-    return OK;
+    Visitor *visitor = NULL;
+    find_visitor_by_id(sys, visitor, visitor_id);
+    return visitor_quit_room(visitor, quit_time);
 }
 
-/*
- * goes through all the visitor list and does quit to each one of the
- * visitors and frees any allocated memory of the list
- */
+
 Result all_visitors_quit(ChallengeRoomSystem *sys, int quit_time) {
     assert(sys != NULL);
     if (sys == NULL) {
         return NULL_PARAMETER;
     }
-    if (quit_time < sys->system_curr_time) {
+    if (quit_time < sys->system_last_known_time) {
         return ILLEGAL_TIME;
     }
 
     //frees any previously allocated memory of the visitors list from the system
-    VisitorsList ptr = sys->visitorsListHead;
+    VisitorsList ptr = sys->visitors_list_head;
     while (ptr != NULL) {
         VisitorsList to_delete = ptr;
         ptr = ptr->next;
         Result result = visitor_quit(sys, to_delete->visitor->visitor_id,
                                      quit_time); //TODO: problem
-        if (result != OK) {
-            return result;
-        }
+        RESULT_STANDARD_CHECK(result);
         free(to_delete);
     }
-    if (quit_time > sys->system_curr_time) {
-        sys->system_curr_time = quit_time;
+    if (quit_time > sys->system_last_known_time) {
+        sys->system_last_known_time = quit_time;
     }
     return OK;
 }
 
 Result system_room_of_visitor(ChallengeRoomSystem *sys, char *visitor_name,
                               char **room_name) {
-    assert(sys != NULL);
     if (sys == NULL) {
         return NULL_PARAMETER;
     }
@@ -486,7 +559,7 @@ Result system_room_of_visitor(ChallengeRoomSystem *sys, char *visitor_name,
         return ILLEGAL_PARAMETER;
     }
 
-    VisitorsList ptr = sys->visitorsListHead->next;
+    VisitorsList ptr = sys->visitors_list_head->next;
     while (ptr != NULL) {
         if (strcmp(ptr->visitor->visitor_name, visitor_name) == 0) {
             Result result = room_of_visitor(ptr->visitor, room_name);
@@ -499,62 +572,64 @@ Result system_room_of_visitor(ChallengeRoomSystem *sys, char *visitor_name,
     return ILLEGAL_PARAMETER;
 }
 
-/*
- * gets a challenge id, and changes the name of the suitable challenge to
- * a new name received as an input
+/**
+ * changes the name of a challenge in the system
+ * @param sys - ptr to the system
+ * @param challenge_id - the id of the challenge
+ * @param new_name - the wanted name for the challenge
+ * @return NULL_PARAMETER: if the ptr to sys or new_name are NULL
+ *         ILLEGAL_PARAMETER: if a challenge with the name given is not found
+ *         OK: if everything went well
  */
 Result change_challenge_name(ChallengeRoomSystem *sys, int challenge_id,
                              char *new_name) {
     if (sys == NULL || new_name == NULL) {
         return NULL_PARAMETER;
     }
-    //iterating over the challenges in the system
     for (int i = 0; i < sys->system_num_challenges; ++i) {
         if ((sys->system_challenges + i)->id == challenge_id) {
             Result result = change_name(sys->system_challenges + i, new_name);
-            if (result != OK) {
-                return result;
-            }
+            RESULT_STANDARD_CHECK(result);
             return OK;
         }
     }
-
-    //if we got here, it means that challenge_id wasn't found in the system
+    //did'nt find a challenge with the id given
     return ILLEGAL_PARAMETER;
 }
 
-/*
- * receives a system and changes it's name to a new name receives as an input
+/**
+ * changes the name of a room in the system
+ * @param sys - ptr to the system
+ * @param current_name - the name of the room
+ * @param new_name - the wanted name of the room
+ * @return NULL_PARAMETER: if the ptr to sys, current_name or new_name are NULL
+ *         ILLEGAL_PARAMETER: if a room with the name given is not found
+ *         OK: if everything went well
  */
 Result change_system_room_name(ChallengeRoomSystem *sys, char *current_name,
                                char *new_name) {
     if (sys == NULL || current_name == NULL || new_name == NULL) {
         return NULL_PARAMETER;
     }
-    //iterating over all the rooms
-    for (int i = 0; i < sys->system_num_rooms; ++i) {
-
-        //checking if we got to the suitable room
-        if (strcmp((sys->system_rooms + i)->name, current_name) == 0) {
-            Result result = change_room_name(sys->system_rooms + i, new_name);
-            if (result != OK) {
-                return result;
-            }
-            return OK;
-        }
-    }
-
-    //if we got here, it means that current_name wasn't found in the system
-    return ILLEGAL_PARAMETER;
+    int room_idx = 0;
+    Result result = find_room_by_name(sys, current_name, &room_idx);
+    RESULT_STANDARD_CHECK(result);
+    result = change_room_name(sys->system_rooms + room_idx, new_name);
+    return result;
+    //TODO check this func again
 }
 
-/*
- * receives a challenge name, searches the challenge and returns the best time
- * of the challenge through ptr
+/**
+ * returns the best time for a specific challenge
+ * @param sys - ptr to the system
+ * @param challenge_name - the name of the challenge
+ * @param time - the ptr that need to be updated
+ * @return NULL_PARAMETER: if the ptr to sys, challenge_name or time are NULL
+ *         ILLEGAL_PARAMETER: if a challenge with the name given is not found
+ *         OK: if everything went well
  */
 Result best_time_of_system_challenge(ChallengeRoomSystem *sys,
                                      char *challenge_name, int *time) {
-    assert(sys != NULL || challenge_name != NULL || time != NULL);
     if (sys == NULL || challenge_name == NULL || time == NULL) {
         return NULL_PARAMETER;
     }
@@ -562,58 +637,46 @@ Result best_time_of_system_challenge(ChallengeRoomSystem *sys,
         if (strcmp((sys->system_challenges + i)->name, challenge_name) == 0) {
             Result result = best_time_of_challenge(sys->system_challenges + i,
                                                    time);
-            if (result != OK) {
-                return result;
-            }
+            RESULT_STANDARD_CHECK(result);
             return OK;
         }
     }
-
-    //if we got here, it means that challenge_name wasn't found in the system
+    //did'nt find a challenge with the name given
     return ILLEGAL_PARAMETER;
 }
 
-/*
- * iterates over all the challenges in the system and returns
- * the most popular challenge in case there are a few most popular, the
- * function will return the lexicographically smallest one
+/**
+ * returns the challenge with the highest num of visits in the room, in case
+ * there are more than one, the lexicographically smallest one will be returned
+ * @param sys - ptr to the system
+ * @param challenge_name - the ptr that needs to be updated
+ * @return NULL_PARAMETER: if the ptr to sys or challenge_name are NULL
+ *         MEMORY_PROBLEM: if allocation problems have occurred
+ *         OK: if everything went well
  */
 Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name) {
-    assert(sys != NULL || *challenge_name != NULL);
-    if (sys == NULL ||
-        *challenge_name == NULL) { //TODO challenge_name or *challenge_name?
+    if (sys == NULL || challenge_name == NULL) {
         return NULL_PARAMETER;
     }
     int max_idx = 0, max = 0, curr = 0;
-
-    //iterating over all the challenges in the system and finds the one
-    //with highest num of visits starting from 1 because we set by default
-    //the initial minimum to the first challenge
+    Result result = num_visits(sys->system_challenges, &max);
+    RESULT_STANDARD_CHECK(result);
     for (int i = 1; i < sys->system_num_challenges; ++i) {
-
-        //if the num of visits of the current challenge is higher,
-        //it will be the current maximum
-        Result result = num_visits(sys->system_challenges + i, &curr);
-        if (result != OK) {
-            return result;
-        }
+        result = num_visits(sys->system_challenges + i, &curr);
+        RESULT_STANDARD_CHECK(result);
         if (curr > max) {
             max_idx = i;
             max = curr;
-            //if the num of visits of the current challenge is equal,
-            //we will take the lexicographically smaller
-        } else if (curr == max) {
-            if (strcmp((sys->system_challenges + i)->name,
-                       (sys->system_challenges + max_idx)->name) < 0) {
-                max_idx = i;
-            }
+        } else if (curr == max && strcmp((sys->system_challenges + i)->name,
+                                         (sys->system_challenges +
+                                          max_idx)->name) < 0) {
+            max_idx = i;
         }
     }
-
     if (max == 0) {
+        //no visits in any of the rooms
         *challenge_name = NULL;
     } else {
-        //creating a separate copy of the challenge name
         *challenge_name = malloc(
                 strlen((sys->system_challenges + max_idx)->name) + 1);
         if (*challenge_name == NULL) {

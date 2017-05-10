@@ -22,6 +22,7 @@
  *         OK: if everything went well
  */
 Result init_challenge(Challenge *challenge, int id, char *name, Level level) {
+    assert(challenge != NULL && name != NULL);
     if (challenge == NULL || name == NULL) {
         return NULL_PARAMETER;
     }
@@ -45,6 +46,7 @@ Result init_challenge(Challenge *challenge, int id, char *name, Level level) {
  *         OK: if everything went well
  */
 Result reset_challenge(Challenge *challenge) {
+    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }
@@ -66,6 +68,7 @@ Result reset_challenge(Challenge *challenge) {
  *         OK: if everything went well
  */
 Result change_name(Challenge *challenge, char *name) {
+    assert(challenge != NULL && name != NULL);
     if (challenge == NULL || name == NULL) {
         return NULL_PARAMETER;
     }
@@ -88,6 +91,7 @@ Result change_name(Challenge *challenge, char *name) {
  *         OK: if everything went well
  */
 Result set_best_time_of_challenge(Challenge *challenge, int time) {
+    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }
@@ -111,6 +115,7 @@ Result set_best_time_of_challenge(Challenge *challenge, int time) {
  *         OK: if everything went well
  */
 Result best_time_of_challenge(Challenge *challenge, int *time) {
+    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }
@@ -125,6 +130,7 @@ Result best_time_of_challenge(Challenge *challenge, int *time) {
  *         OK: if everything went well
  */
 Result inc_num_visits(Challenge *challenge) {
+    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }
@@ -140,6 +146,7 @@ Result inc_num_visits(Challenge *challenge) {
  *         OK: if everything went well
  */
 Result num_visits(Challenge *challenge, int *visits) {
+    assert(challenge != NULL);
     if (challenge == NULL) {
         return NULL_PARAMETER;
     }

@@ -21,6 +21,7 @@
  */
 Result init_challenge_activity(ChallengeActivity *activity,
                                Challenge *challenge) {
+    assert(activity != NULL && challenge != NULL);
     if (activity == NULL || challenge == NULL) {
         return NULL_PARAMETER;
     }
@@ -37,6 +38,7 @@ Result init_challenge_activity(ChallengeActivity *activity,
  *         OK: if everything went well
  */
 Result reset_challenge_activity(ChallengeActivity *activity) {
+    assert(activity != NULL);
     if (activity == NULL) {
         return NULL_PARAMETER;
     }
@@ -57,6 +59,7 @@ Result reset_challenge_activity(ChallengeActivity *activity) {
  *         OK: if everything went well
  */
 Result init_visitor(Visitor *visitor, char *name, int id) {
+    assert(visitor != NULL && name != NULL);
     if (visitor == NULL || name == NULL) {
         return NULL_PARAMETER;
     }
@@ -79,6 +82,7 @@ Result init_visitor(Visitor *visitor, char *name, int id) {
  *         OK: if everything went well
  */
 Result reset_visitor(Visitor *visitor) {
+    assert(visitor != NULL);
     if (visitor == NULL) {
         return NULL_PARAMETER;
     }
@@ -103,6 +107,7 @@ Result reset_visitor(Visitor *visitor) {
  *         OK: if everything went well
  */
 Result init_room(ChallengeRoom *room, char *name, int num_challenges) {
+    assert(room != NULL && name != NULL);
     if (room == NULL || name == NULL) {
         return NULL_PARAMETER;
     }
@@ -136,6 +141,7 @@ Result init_room(ChallengeRoom *room, char *name, int num_challenges) {
  *         OK: if everything went well
  */
 Result reset_room(ChallengeRoom *room) {
+    assert(room != NULL);
     if (room == NULL) {
         return NULL_PARAMETER;
     }
@@ -161,6 +167,7 @@ Result reset_room(ChallengeRoom *room) {
  */
 Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
                                     int *places) {
+    assert(room != NULL);
     if (room == NULL) {
         return NULL_PARAMETER;
     }
@@ -191,6 +198,7 @@ Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
  *         OK: if everything went well
  */
 Result change_room_name(ChallengeRoom *room, char *new_name) {
+    assert(room != NULL && new_name != NULL);
     if (room == NULL || new_name == NULL) {
         return NULL_PARAMETER;
     }
@@ -216,7 +224,8 @@ Result change_room_name(ChallengeRoom *room, char *new_name) {
  *         OK: if everything went well
  */
 Result room_of_visitor(Visitor *visitor, char **room_name) {
-    if (*room_name == NULL) {
+    assert(room_name != NULL);
+    if (room_name == NULL) {
         return NULL_PARAMETER;
     }
     if (visitor == NULL || *(visitor->room_name) == NULL) {
@@ -238,6 +247,7 @@ Result room_of_visitor(Visitor *visitor, char **room_name) {
  * @return the idx of the challenge
  */
 static int find_lex_smallest(ChallengeRoom *room, Level level) {
+    assert(room != NULL);
     int challenge_idx = 0;
     int num_challenges = room->num_of_challenges;
     for (int i = 0; i < num_challenges; ++i) {
@@ -266,6 +276,7 @@ static int find_lex_smallest(ChallengeRoom *room, Level level) {
  */
 static Result visitor_update_fields(ChallengeRoom *room, Visitor *visitor,
                                     int challenge_idx, int start_time) {
+    assert(room != NULL && visitor != NULL);
     //updates the room_name field in the visitor
     *(visitor->room_name) = malloc(strlen(room->name) + 1);
     if (*(visitor->room_name) == NULL) {
@@ -297,10 +308,11 @@ static Result visitor_update_fields(ChallengeRoom *room, Visitor *visitor,
  */
 Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
                           int start_time) {
+    assert(room != NULL && visitor != NULL);
     if (room == NULL || visitor == NULL) {
         return NULL_PARAMETER;
     }
-    if (*(visitor->room_name) != NULL) {
+    if (visitor->room_name != NULL) {
         return ALREADY_IN_ROOM;
     }
     int matching_challenges = 0;
@@ -323,6 +335,7 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
  *         OK: if everything went well
  */
 Result visitor_quit_room(Visitor *visitor, int quit_time) {
+    assert(visitor != NULL);
     if (visitor == NULL) {
         return NULL_PARAMETER;
     }
@@ -337,6 +350,5 @@ Result visitor_quit_room(Visitor *visitor, int quit_time) {
                                    visitor_total_time) == NULL_PARAMETER) {
         return NULL_PARAMETER;
     }
-
-    return reset_visitor(visitor);
+    return OK;
 }

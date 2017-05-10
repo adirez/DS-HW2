@@ -3,10 +3,10 @@
 //
 /*
 char *system_name;
-int system_curr_time;
+int system_last_known_time;
 Challenge **system_challenges;
 int system_num_challenges;
 ChallengeRoom **system_rooms;
 int system_num_rooms;
-VisitorsList visitorsListHead;
+VisitorsList visitors_list_head;
 */
