@@ -259,7 +259,7 @@ Result create_system(char *init_file, ChallengeRoomSystem **sys) {
     if (init_file == NULL || sys == NULL) {
         return NULL_PARAMETER;
     }
-    (*sys) = malloc(sizeof(*sys));
+    (*sys) = malloc(sizeof(**sys));
     (*sys)->system_last_known_time = 0;
     (*sys)->system_num_rooms = 0;
     (*sys)->system_num_challenges = 0;
@@ -391,7 +391,7 @@ static Result find_room_by_name(ChallengeRoomSystem *sys, char *room_name,
                                 int *room_idx) {
     assert(sys != NULL && room_name != NULL && room_idx != NULL);
     for (int i = 0; i < sys->system_num_rooms; ++i) {
-        if (strcmp((sys->system_rooms + i)->name, room_name)) {
+        if (strcmp((sys->system_rooms + i)->name, room_name) == 0) {
             *room_idx = i;
             return OK;
         }
@@ -455,7 +455,7 @@ Result visitor_arrive(ChallengeRoomSystem *sys, char *room_name,
         RESULT_STANDARD_CHECK(result);
     } else {
         assert(visitor != NULL);
-        if (*(visitor->room_name) != NULL) {
+        if (visitor->room_name != NULL) {
             return ALREADY_IN_ROOM;
         }
     }

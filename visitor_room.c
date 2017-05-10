@@ -89,7 +89,6 @@ Result reset_visitor(Visitor *visitor) {
     free(visitor->visitor_name);
     visitor->visitor_name = NULL;
     visitor->visitor_id = 0;
-    *(visitor->room_name) = NULL;
     visitor->room_name = NULL;
     visitor->current_challenge = NULL;
     return OK;
@@ -180,8 +179,8 @@ Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
     int count = 0;
     for (int i = 0; i < room->num_of_challenges; ++i) {
         //checks the challenge's level & that the room is empty
-        if (room->challenges[i].challenge->level == level
-            && room->challenges[i].visitor == NULL) {
+        if ( (room->challenges + i)->challenge->level == level
+            && (room->challenges + i)->visitor == NULL) {
             count++;
         }
     }
@@ -228,7 +227,7 @@ Result room_of_visitor(Visitor *visitor, char **room_name) {
     if (room_name == NULL) {
         return NULL_PARAMETER;
     }
-    if (visitor == NULL || *(visitor->room_name) == NULL) {
+    if (visitor == NULL || visitor->room_name == NULL) {
         return NOT_IN_ROOM;
     }
     *room_name = malloc(strlen(*(visitor->room_name)) + 1);
@@ -278,11 +277,12 @@ static Result visitor_update_fields(ChallengeRoom *room, Visitor *visitor,
                                     int challenge_idx, int start_time) {
     assert(room != NULL && visitor != NULL);
     //updates the room_name field in the visitor
-    *(visitor->room_name) = malloc(strlen(room->name) + 1);
-    if (*(visitor->room_name) == NULL) {
-        return MEMORY_PROBLEM;
-    }
-    strcpy(*(visitor->room_name), room->name);
+//    *(visitor->room_name) = malloc(strlen(room->name) + 1);//TODO verify that this is a pointer to a string and not a copy
+//    if (*(visitor->room_name) == NULL) {
+//        return MEMORY_PROBLEM;
+//    }
+//    strcpy(*(visitor->room_name), room->name);
+    visitor->room_name = &(room->name);
     //updates the chosen ChallengeActivity in the room
     room->challenges[challenge_idx].visitor = visitor;
     room->challenges[challenge_idx].start_time = start_time;
@@ -339,7 +339,7 @@ Result visitor_quit_room(Visitor *visitor, int quit_time) {
     if (visitor == NULL) {
         return NULL_PARAMETER;
     }
-    if (*(visitor->room_name) == NULL) {
+    if (visitor->room_name == NULL) {
         return NOT_IN_ROOM;
     }
     //calculates the total time that took the visitor to finish the challenge
