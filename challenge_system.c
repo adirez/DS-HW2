@@ -521,12 +521,22 @@ Result visitor_quit(ChallengeRoomSystem *sys, int visitor_id, int quit_time) {
     }
     Visitor *visitor = NULL;
     find_visitor_by_id(sys, visitor, visitor_id);
+    sys->system_last_known_time = quit_time;
     return visitor_quit_room(visitor, quit_time);
 }
 
-
+/**
+ * updates the system when all visitors are getting out of their rooms
+ * @param sys - ptr to the system
+ * @param quit_time - the current time
+ * @return NULL_PARAMETER: if the ptr to sys is NULL
+ *         ILLEGAL_TIME: if the quit_time is not greater or equal than the
+ *                       last time known to the system
+ *         MEMORY_PROBLEM: if allocation problems have occurred
+ *         NOT_IN_ROOM: if the visitor is not in a room
+ *         OK: if everything went well
+ */
 Result all_visitors_quit(ChallengeRoomSystem *sys, int quit_time) {
-    assert(sys != NULL);
     if (sys == NULL) {
         return NULL_PARAMETER;
     }
@@ -534,22 +544,25 @@ Result all_visitors_quit(ChallengeRoomSystem *sys, int quit_time) {
         return ILLEGAL_TIME;
     }
 
-    //frees any previously allocated memory of the visitors list from the system
-    VisitorsList ptr = sys->visitors_list_head;
+    VisitorsList ptr = sys->visitors_list_head->next;
     while (ptr != NULL) {
-        VisitorsList to_delete = ptr;
-        ptr = ptr->next;
-        Result result = visitor_quit(sys, to_delete->visitor->visitor_id,
-                                     quit_time); //TODO: problem
+        Result result = visitor_quit_room(ptr->visitor, quit_time);
         RESULT_STANDARD_CHECK(result);
-        free(to_delete);
     }
-    if (quit_time > sys->system_last_known_time) {
-        sys->system_last_known_time = quit_time;
-    }
+    sys->system_last_known_time = quit_time;
     return OK;
 }
 
+/**
+ * returns the room name in which the visitor is in
+ * @param sys - ptr to the system
+ * @param visitor_name - the name of the visitor
+ * @param room_name - the ptr that needs to be updated
+ * @return NULL_PARAMETER: if the ptr to sys is NULL
+ *         ILLEGAL_PARAMETER: if a visitor_name or room_name are NULL
+ *         NOT_IN_ROOM: if the visitor is not in a room
+ *         OK: if everything went well
+ */
 Result system_room_of_visitor(ChallengeRoomSystem *sys, char *visitor_name,
                               char **room_name) {
     if (sys == NULL) {
@@ -563,7 +576,6 @@ Result system_room_of_visitor(ChallengeRoomSystem *sys, char *visitor_name,
     while (ptr != NULL) {
         if (strcmp(ptr->visitor->visitor_name, visitor_name) == 0) {
             Result result = room_of_visitor(ptr->visitor, room_name);
-
             return result;
         }
         ptr = ptr->next;
