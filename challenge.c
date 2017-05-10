@@ -92,9 +92,16 @@ Result set_best_time_of_challenge(Challenge *challenge, int time) {
         return NULL_PARAMETER;
     }
     //when best time is set to 0 it means that there were no visitors yet
-    if (time >= 0 && time <= challenge->best_time) {
-        challenge->best_time = time;
-        return OK;
+    if (challenge->best_time != 0) {
+        if (time >= 0 && time <= challenge->best_time) {
+            challenge->best_time = time;
+            return OK;
+        }
+    } else {
+        if (time >= 0) {
+            challenge->best_time = time;
+            return OK;
+        }
     }
     if (time < 0 || time > challenge->best_time) {
         return ILLEGAL_PARAMETER;

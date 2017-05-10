@@ -1,7 +1,6 @@
 //
 // Created by adire on 02-May-17.
 //
-
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
@@ -20,7 +19,7 @@ int main(int argc, char **argv)
     ChallengeRoomSystem *sys=NULL;
     Result r=OK;
 
-    r=create_system("C:\\Adi\\Documents\\Technion\\Semester2\\MTM\\HW\\HW2\\Escapy\\test_1.txt", &sys);
+    r=create_system("C:\\Users\\Shahak\\CLionProjects\\HW2\\test_1.txt", &sys);
 
     r=visitor_arrive(sys, "room_2", "visitor_1", 201, Medium, 5);
 

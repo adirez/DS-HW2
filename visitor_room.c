@@ -60,7 +60,7 @@ Result init_visitor(Visitor *visitor, char *name, int id) {
     if (visitor == NULL || name == NULL) {
         return NULL_PARAMETER;
     }
-    visitor->visitor_name = malloc(strlen(name) + 1);
+    visitor->visitor_name =  malloc(strlen(name) + 1);
     if (visitor->visitor_name == NULL) {
         return MEMORY_PROBLEM;
     }
@@ -300,7 +300,7 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
     if (room == NULL || visitor == NULL) {
         return NULL_PARAMETER;
     }
-    if (*(visitor->room_name) != NULL) {
+    if (visitor->room_name != NULL) {
         return ALREADY_IN_ROOM;
     }
     int matching_challenges = 0;

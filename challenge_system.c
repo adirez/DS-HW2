@@ -214,7 +214,7 @@ Result create_system(char *init_file, ChallengeRoomSystem **sys) {
     if (init_file == NULL || sys == NULL) {
         return NULL_PARAMETER;
     }
-    (*sys) = malloc(sizeof(*sys));
+    (*sys) = malloc(sizeof(**sys));
     (*sys)->system_curr_time = 0;
     (*sys)->system_num_rooms = 0;
     (*sys)->system_num_challenges = 0;
