@@ -227,12 +227,11 @@ Result change_room_name(ChallengeRoom *room, char *new_name) {
  *         OK: if everything went well
  */
 Result room_of_visitor(Visitor *visitor, char **room_name) {
-    assert(room_name != NULL);
-    if (room_name == NULL) {
+    assert(room_name != NULL && visitor != NULL);
+    if (room_name == NULL || visitor == NULL) {
         return NULL_PARAMETER;
     }
-    if (visitor == NULL || visitor->room_name == NULL ||
-        visitor->visitor_id == 0) {
+    if (visitor->room_name == NULL || visitor->visitor_id == 0) {
         return NOT_IN_ROOM;
     }
     *room_name = malloc(strlen(*(visitor->room_name)) + 1);
