@@ -352,7 +352,7 @@ Result visitor_quit_room(Visitor *visitor, int quit_time) {
     //update the best time in the Challenge
     Result result = set_best_time_of_challenge
             (visitor->current_challenge->challenge, visitor_total_time);
-    if (result != OK) {
+    if (result != OK && result != ILLEGAL_PARAMETER) {
         return result;
     }
     visitor->current_challenge->visitor = NULL;

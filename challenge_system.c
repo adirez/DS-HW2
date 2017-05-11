@@ -353,7 +353,7 @@ Result destroy_system(ChallengeRoomSystem *sys, int destroy_time, char
     result = all_visitors_quit(sys, destroy_time);
     //might send bad time for set_best_time_of_challenge and get
     //ILLEGAL_PARAMETER
-    if (result != OK && result != ILLEGAL_PARAMETER) {
+    if (result != OK) {
         return result;
     }
     free(sys->visitors_list_head);
@@ -573,7 +573,9 @@ Result all_visitors_quit(ChallengeRoomSystem *sys, int quit_time) {
     while (ptr != NULL) {
         Result result = visitor_quit_room(ptr->visitor, quit_time);
         RESULT_STANDARD_CHECK(result);
-        ptr = ptr->next;
+        VisitorsList tmp_ptr = ptr->next;
+        destroy_visitor_node(sys, ptr->visitor);
+        ptr = tmp_ptr;
     }
     sys->system_last_known_time = quit_time;
     return OK;
