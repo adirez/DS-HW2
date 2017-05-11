@@ -11,6 +11,7 @@
 
 #include "visitor_room.h"
 
+#define UNDEFINED -1
 static int find_lex_smallest(ChallengeRoom *room, Level level);
 
 static Result visitor_update_fields(ChallengeRoom *room, Visitor *visitor,
@@ -257,14 +258,14 @@ Result room_of_visitor(Visitor *visitor, char **room_name) {
  */
 static int find_lex_smallest(ChallengeRoom *room, Level level) {
     assert(room != NULL);
-    int challenge_idx = 0;
+    int challenge_idx = UNDEFINED;
     int num_challenges = room->num_of_challenges;
     for (int i = 0; i < num_challenges; ++i) {
         if ((level == All_Levels ||
              room->challenges[i].challenge->level == level) &&
             room->challenges[i].visitor == NULL) {
 
-            if (challenge_idx == 0 ||
+            if (challenge_idx == UNDEFINED ||
                 strcmp(room->challenges[i].challenge->name,
                        room->challenges[challenge_idx].challenge->name) < 0) {
                 challenge_idx = i;
@@ -326,7 +327,7 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
         return NO_AVAILABLE_CHALLENGES;
     }
     int challenge_idx = find_lex_smallest(room, level);
-    assert(challenge_idx != 0);
+    assert(challenge_idx != UNDEFINED);
 
     return visitor_update_fields(room, visitor, challenge_idx, start_time);
 }
