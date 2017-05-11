@@ -103,7 +103,7 @@ Result set_best_time_of_challenge(Challenge *challenge, int time) {
             challenge->best_time = time;
         }
     } else {
-        if (time >= 0 && time < challenge->best_time) {
+        if (time >= 0 && time <= challenge->best_time) {
             challenge->best_time = time;
         } else{
             return ILLEGAL_PARAMETER;
