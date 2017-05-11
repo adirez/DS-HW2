@@ -46,13 +46,12 @@ static Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file);
 
 static Result create_system_visitor_list_head(ChallengeRoomSystem *sys);
 
-static Result find_challenge_best_time(ChallengeRoomSystem *sys,
-                                       char **challenge_best_time,
-                                       int *time);
+static Result system_lowest_best_time(ChallengeRoomSystem *sys,
+                                      char **challenge_best_time);
 
 static void destroy_visitor_node(ChallengeRoomSystem *sys, Visitor *visitor);
 
-static Visitor* find_visitor_by_id(ChallengeRoomSystem *sys, int visitor_id);
+static Visitor *find_visitor_by_id(ChallengeRoomSystem *sys, int visitor_id);
 
 static Result create_visitor_node(ChallengeRoomSystem *sys, char *visitor_name,
                                   int visitor_id);
@@ -139,7 +138,7 @@ static Result create_system_challenges(ChallengeRoomSystem *sys,
         int level = 0, id = 0;
         fscanf(input_file, "%s %d %d\n", challenge_name, &id, &level);
         Result result = init_challenge((sys->system_challenges + i), id,
-                                       challenge_name, (Level) level-1);
+                                       challenge_name, (Level) level - 1);
         if (result != OK) {
             free_system_challenges_and_previous(sys);
             return result;
@@ -277,71 +276,77 @@ Result create_system(char *init_file, ChallengeRoomSystem **sys) {
     return OK;
 }
 
-/*
- *iterates over all the challenges and returns the challenge with the best
- * time of all
+/**
+ * returns the challenge with the lowest best_time in the system
+ * @param sys - ptr to the system
+ * @param challenge_best_time - the ptr that needs to be updated
+ * @return MEMORY_PROBLEM: if allocation problems have occurred
+ *         OK: if everything went well
  */
-static Result find_challenge_best_time(ChallengeRoomSystem *sys,
-                                       char **challenge_best_time,
-                                       int *time) {
-    int best_time = 0;
-    int max_i = 0;
-    for (int i = 0; i < sys->system_num_challenges; ++i) {
-        int tmp_time = 0;
-        Result result;
-        result = best_time_of_system_challenge(sys,
-                                               (sys->system_challenges + i)
-                                                       ->name,
-                                               &tmp_time);
-        RESULT_STANDARD_CHECK(result);
-        if (tmp_time > 0 && tmp_time < best_time) {
-            best_time = tmp_time;
-            max_i = i;
-        } else if (tmp_time > 0 && tmp_time == best_time) {
-            if (strcmp((sys->system_challenges + i)->name,
-                       (sys->system_challenges + max_i)->name) < 0) {
-                max_i = i;
-            }
+static Result system_lowest_best_time(ChallengeRoomSystem *sys,
+                                      char **challenge_best_time) {
+    assert(sys != NULL);
+    int min_idx = 0, min = sys->system_challenges->best_time;
+    for (int i = 1; i < sys->system_num_challenges; ++i) {
+        if (((sys->system_challenges + i)->best_time < min) &&
+            strcmp((sys->system_challenges + i)->name,
+                   (sys->system_challenges + min_idx)->name) < 0) {
+            min = (sys->system_challenges + i)->best_time;
+            min_idx = i;
         }
     }
-    *time = best_time;
-    char *tmp_ptr = realloc(*challenge_best_time,
-                            strlen((sys->system_challenges + max_i)
-                                           ->name));
-    if (tmp_ptr == NULL) {
+    *challenge_best_time = malloc(strlen((sys->system_challenges + min_idx)
+                                                 ->name) + 1);
+    if (*challenge_best_time == NULL) {
         return MEMORY_PROBLEM;
     }
-    *challenge_best_time = tmp_ptr;
+    strcpy(*challenge_best_time, (sys->system_challenges + min_idx)->name);
     return OK;
 }
 
+
+/**
+ * resets any memory and frees any allocated memory from the system.
+ * also force quit for any visitor left in the system.
+ * returns the most popular challenge through ptr, if there are some with the
+ * same num of visits the smallest lexicographically will be returned, if
+ * there were no visitors NULL will be returned.
+ * also returns the name of the challenge with the lowest best_time param,
+ * if there are some the smallest lexicographically will be returned, if
+ * there were no visitors 0 will be returned.
+ * @param sys - ptr to the system
+ * @param destroy_time - the current time
+ * @param most_popular_challenge_p - the ptr that needs to be updated
+ * @param challenge_best_time - the ptr that needs to be updated
+ * @return NULL_PARAMETER: if the ptr to sys or most_popular_challenge_p or
+ *                         challenge_best_time are NULL
+ *         ILLEGAL_TIME: if the destroy_time is not greater or equal than the
+ *                       last time known to the system
+ *         MEMORY_PROBLEM: if allocation problems have occurred
+ *         OK: if everything went well
+ */
 Result destroy_system(ChallengeRoomSystem *sys, int destroy_time, char
 **most_popular_challenge_p, char **challenge_best_time) {
-    assert(sys != NULL && *most_popular_challenge_p != NULL &&
-           *challenge_best_time != NULL);
-    if (sys == NULL || *most_popular_challenge_p == NULL ||
-        *challenge_best_time == NULL) {
+    if (sys == NULL || most_popular_challenge_p == NULL ||
+        challenge_best_time == NULL) {
         return NULL_PARAMETER;
     }
     if (destroy_time < sys->system_last_known_time) {
         return ILLEGAL_TIME;
     }
-    Result result = all_visitors_quit(sys, destroy_time);
+    Result result = most_popular_challenge(sys, most_popular_challenge_p);
     RESULT_STANDARD_CHECK(result);
-    free(*most_popular_challenge_p);
-    result = most_popular_challenge(sys, most_popular_challenge_p);
+    result = all_visitors_quit(sys, destroy_time);
     RESULT_STANDARD_CHECK(result);
-
-    //no need to free because we used realloc in the func
-    int best_time = 0;
-    result = find_challenge_best_time(sys, challenge_best_time, &best_time);
+    free(sys->visitors_list_head);
+    result = system_lowest_best_time(sys, challenge_best_time);
     RESULT_STANDARD_CHECK(result);
 
-    //if the best time is 0, it means no visitors have done any challenges
-    if (best_time == 0) {
-        free(*challenge_best_time);
-        *challenge_best_time = NULL;
-    }
+    free_system_rooms_and_previous(sys);
+    free(sys->system_name);
+    sys->system_num_rooms = 0;
+    sys->system_num_challenges = 0;
+    sys->system_last_known_time = 0;
     return OK;
 }
 
@@ -481,15 +486,15 @@ Result visitor_arrive(ChallengeRoomSystem *sys, char *room_name,
  *         found in the system
  *         OK: if everything went well
  */
-static Visitor* find_visitor_by_id(ChallengeRoomSystem *sys, int visitor_id) {
+static Visitor *find_visitor_by_id(ChallengeRoomSystem *sys, int visitor_id) {
     assert(sys != NULL && visitor == NULL);
     VisitorsList ptr = sys->visitors_list_head->next;
-    while (ptr != NULL && ptr->visitor->visitor_id != visitor_id){
+    while (ptr != NULL && ptr->visitor->visitor_id != visitor_id) {
         ptr = ptr->next;
     }
-    if (ptr == NULL){
+    if (ptr == NULL) {
         return NULL;
-    } else{
+    } else {
         return ptr->visitor;
     }
 }
@@ -516,12 +521,12 @@ Result visitor_quit(ChallengeRoomSystem *sys, int visitor_id, int quit_time) {
         return ILLEGAL_TIME;
     }
     Visitor *visitor = find_visitor_by_id(sys, visitor_id);
-    if(visitor == NULL) {
+    if (visitor == NULL) {
         return NOT_IN_ROOM;
     }
     sys->system_last_known_time = quit_time;
     Result result = visitor_quit_room(visitor, quit_time);
-    if(result != OK){
+    if (result != OK) {
         return result;
     }
     destroy_visitor_node(sys, visitor);
@@ -701,4 +706,24 @@ Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name) {
         strcpy(*challenge_name, (sys->system_challenges + max_idx)->name);
     }
     return OK;
+}
+
+//TODO: delete:
+void system_print(ChallengeRoomSystem *sys) {
+    printf("%s\n", sys->system_name);
+    printf("%d\n", sys->system_num_challenges);
+    for (int i = 0; i < sys->system_num_challenges; ++i) {
+        printf("%s %d %d\n", (sys->system_challenges + i)->name,
+               (sys->system_challenges + i)->id,
+               (sys->system_challenges + i)->level);
+    }
+    printf("%d\n", sys->system_num_rooms);
+    for (int j = 0; j < sys->system_num_rooms; ++j) {
+        printf("%s ", (sys->system_rooms + j)->name);
+        for (int i = 0; i < (sys->system_rooms + j)->num_of_challenges; ++i) {
+            printf("%d ",
+                   ((sys->system_rooms + j)->challenges + i)->challenge->id);
+        }
+        printf("\n");
+    }
 }
