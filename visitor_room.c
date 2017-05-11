@@ -261,8 +261,6 @@ static int find_lex_smallest(ChallengeRoom *room, Level level) {
     int challenge_idx = UNDEFINED;
     int num_challenges = room->num_of_challenges;
     for (int i = 0; i < num_challenges; ++i) {
-    int challenge_idx = -1;
-    for (int i = 0; i < room->num_of_challenges; ++i) {
         if ((level == All_Levels ||
              room->challenges[i].challenge->level == level) &&
             room->challenges[i].visitor == NULL) {
@@ -270,7 +268,6 @@ static int find_lex_smallest(ChallengeRoom *room, Level level) {
             if (challenge_idx == UNDEFINED ||
                 strcmp(room->challenges[i].challenge->name,
                        room->challenges[challenge_idx].challenge->name) < 0) {
-
                 challenge_idx = i;
             }
         }
