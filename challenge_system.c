@@ -24,7 +24,6 @@
     }
 
 /* deceleration for static functions */
-static void free_system_name(ChallengeRoomSystem *sys);
 
 static void free_system_name(ChallengeRoomSystem *sys);
 
@@ -38,7 +37,7 @@ static Result create_system_challenges(ChallengeRoomSystem *sys,
                                        FILE *input_file);
 
 static Result add_challenge_to_room(ChallengeRoomSystem *sys, int challenge_id,
-                                    int activity_idx);
+                                    int activity_idx, int room_idx);
 
 static Result rooms_add_challenge_activities(ChallengeRoomSystem *sys,
                                              FILE *input_file);
@@ -159,10 +158,11 @@ static Result create_system_challenges(ChallengeRoomSystem *sys,
  *         OK: if everything went well
  */
 static Result add_challenge_to_room(ChallengeRoomSystem *sys, int challenge_id,
-                                    int activity_idx) {
+                                    int activity_idx, int room_idx) {
     for (int i = 0; i < sys->system_num_challenges; ++i) {
         if ((sys->system_challenges + i)->id == challenge_id) {
-            Result result = init_challenge_activity(((sys->system_rooms)
+
+            Result result = init_challenge_activity(((sys->system_rooms + room_idx)
                                                              ->challenges +
                                                      activity_idx),
                                                     sys->system_challenges + i);
@@ -170,6 +170,7 @@ static Result add_challenge_to_room(ChallengeRoomSystem *sys, int challenge_id,
                 free_system_rooms_and_previous(sys);
                 return result;
             }
+            return OK;
         }
 
     }
@@ -203,7 +204,7 @@ static Result rooms_add_challenge_activities(ChallengeRoomSystem *sys,
                 //if that's the last id move cursor to the start of next line
                 fscanf(input_file, "%d\n", &challenge_id);
             }
-            result = add_challenge_to_room(sys, challenge_id, j);
+            result = add_challenge_to_room(sys, challenge_id, j, i);
             if (result != OK) {
                 free_system_rooms_and_previous(sys);
                 return result;

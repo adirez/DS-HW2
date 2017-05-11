@@ -22,7 +22,8 @@ int main(int argc, char **argv)
     r=create_system("C:\\Users\\Shahak\\CLionProjects\\HW2\\test_1.txt", &sys);
 
     r=visitor_arrive(sys, "room_2", "visitor_1", 201, Medium, 5);
-
+    char *p = (sys->system_rooms + 1)->name;
+    printf("%s\n",p);
     r=visitor_arrive(sys, "room_1", "visitor_2", 202, Easy, 8);
 
     r=visitor_quit(sys, 203, 10);
