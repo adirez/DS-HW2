@@ -174,13 +174,19 @@ Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
     if (room == NULL || places == NULL) {
         return NULL_PARAMETER;
     }
+    int count = 0;
     //if the level is All_Levels returns the num of challenges in the room
     if (level == All_Levels) {
-        *places = room->num_of_challenges;
+        for (int i = 0; i < room->num_of_challenges; ++i) {
+            //checks that the room is empty
+            if ((room->challenges + i)->visitor == NULL) {
+                count++;
+            }
+        }
+        *places = count;
         return OK;
     }
 
-    int count = 0;
     for (int i = 0; i < room->num_of_challenges; ++i) {
         //checks the challenge's level & that the room is empty
         if ((room->challenges + i)->challenge->level == level
