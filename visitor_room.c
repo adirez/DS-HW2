@@ -11,6 +11,10 @@
 
 #include "visitor_room.h"
 
+static int find_lex_smallest(ChallengeRoom *room, Level level);
+static Result visitor_update_fields(ChallengeRoom *room, Visitor *visitor,
+                                    int challenge_idx, int start_time);
+
 /**
  * initializes all the fields of a 'ChallengeActivity' data type.
  * @param activity - ptr to a data type 'challenge_activity' to initialize
@@ -345,9 +349,6 @@ Result visitor_quit_room(Visitor *visitor, int quit_time) {
     int visitor_total_time = quit_time -
                              (visitor->current_challenge->start_time);
     //update the best time in the Challenge
-    if (set_best_time_of_challenge(visitor->current_challenge->challenge,
-                                   visitor_total_time) == NULL_PARAMETER) {
-        return NULL_PARAMETER;
-    }
-    return OK;
+    return set_best_time_of_challenge
+            (visitor->current_challenge->challenge,visitor_total_time);
 }

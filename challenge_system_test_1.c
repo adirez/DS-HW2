@@ -17,13 +17,14 @@ int main(int argc, char **argv)
 {
 
     ChallengeRoomSystem *sys=NULL;
+
     Result r=OK;
 
-    r=create_system("C:\\Users\\Shahak\\CLionProjects\\HW2\\test_1.txt", &sys);
+    r = create_system("C:\\Adi\\Documents\\Technion\\Semester2\\MTM\\HW\\HW2"
+                           "\\Escapy\\test_1.txt", &sys);
 
     r=visitor_arrive(sys, "room_2", "visitor_1", 201, Medium, 5);
-    char *p = (sys->system_rooms + 1)->name;
-    printf("%s\n",p);
+
     r=visitor_arrive(sys, "room_1", "visitor_2", 202, Easy, 8);
 
     r=visitor_quit(sys, 203, 10);
@@ -73,6 +74,7 @@ int main(int argc, char **argv)
     r=all_visitors_quit(sys, 17);
 
     r=best_time_of_system_challenge(sys, "challenge_1111", &time);
+    printf("\ntime = %d\n", time);
     ASSERT("1.12" , time==9)
 
     r=best_time_of_system_challenge(sys, "challenge_4", &time);

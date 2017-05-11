@@ -52,8 +52,7 @@ static Result find_challenge_best_time(ChallengeRoomSystem *sys,
 
 static void destroy_visitor_node(ChallengeRoomSystem *sys, Visitor *visitor);
 
-static Result find_visitor_by_id(ChallengeRoomSystem *sys, Visitor *visitor,
-                                 int visitor_id);
+static Visitor* find_visitor_by_id(ChallengeRoomSystem *sys, int visitor_id);
 
 static Result create_visitor_node(ChallengeRoomSystem *sys, char *visitor_name,
                                   int visitor_id);
@@ -140,7 +139,7 @@ static Result create_system_challenges(ChallengeRoomSystem *sys,
         int level = 0, id = 0;
         fscanf(input_file, "%s %d %d\n", challenge_name, &id, &level);
         Result result = init_challenge((sys->system_challenges + i), id,
-                                       challenge_name, (Level) level);
+                                       challenge_name, (Level) level-1);
         if (result != OK) {
             free_system_challenges_and_previous(sys);
             return result;
@@ -161,11 +160,9 @@ static Result add_challenge_to_room(ChallengeRoomSystem *sys, int challenge_id,
                                     int activity_idx, int room_idx) {
     for (int i = 0; i < sys->system_num_challenges; ++i) {
         if ((sys->system_challenges + i)->id == challenge_id) {
-
-            Result result = init_challenge_activity(((sys->system_rooms + room_idx)
-                                                             ->challenges +
-                                                     activity_idx),
-                                                    sys->system_challenges + i);
+            Result result = init_challenge_activity(
+                    ((sys->system_rooms + room_idx)->challenges + activity_idx),
+                    sys->system_challenges + i);
             if (result != OK) {
                 free_system_rooms_and_previous(sys);
                 return result;
@@ -365,7 +362,7 @@ static Result create_visitor_node(ChallengeRoomSystem *sys, char *visitor_name,
         return MEMORY_PROBLEM;
     }
     new_node->visitor = malloc(sizeof(*new_node->visitor));
-    if(new_node->visitor == NULL){
+    if (new_node->visitor == NULL) {
         free(new_node);
         return MEMORY_PROBLEM;
     }
@@ -449,19 +446,17 @@ Result visitor_arrive(ChallengeRoomSystem *sys, char *room_name,
     if (visitor_name == NULL || room_name == NULL) {
         return ILLEGAL_PARAMETER;
     }
-    Visitor *visitor = NULL;
-    Result result = find_visitor_by_id(sys, visitor, visitor_id);
-    if (result != OK) {
-        result = create_visitor_node(sys, visitor_name, visitor_id);
+    Visitor *visitor = find_visitor_by_id(sys, visitor_id);
+    if (visitor == NULL) {
+        Result result = create_visitor_node(sys, visitor_name, visitor_id);
         RESULT_STANDARD_CHECK(result);
     } else {
-        assert(visitor != NULL);
         if (visitor->room_name != NULL) {
             return ALREADY_IN_ROOM;
         }
     }
     int room_idx = 0;
-    result = find_room_by_name(sys, room_name, &room_idx);
+    Result result = find_room_by_name(sys, room_name, &room_idx);
     if (result != OK) {
         destroy_visitor_node(sys, sys->visitors_list_head->next->visitor);
         return result;
@@ -482,21 +477,20 @@ Result visitor_arrive(ChallengeRoomSystem *sys, char *room_name,
  * @param sys - ptr to the system
  * @param visitor - the ptr that needs to be updated
  * @param visitor_id - the id of the wanted visitor
- * @return ILLEGAL_PARAMETER: if the visitor is not it the system yet
+ * @return NOT_IN_ROOM: if the visitor is not in a room or visitor_id is not
+ *         found in the system
  *         OK: if everything went well
  */
-static Result find_visitor_by_id(ChallengeRoomSystem *sys, Visitor *visitor,
-                                 int visitor_id) {
+static Visitor* find_visitor_by_id(ChallengeRoomSystem *sys, int visitor_id) {
     assert(sys != NULL && visitor == NULL);
     VisitorsList ptr = sys->visitors_list_head->next;
-    while (ptr != NULL && ptr->visitor->visitor_id != visitor_id) {
+    while (ptr != NULL && ptr->visitor->visitor_id != visitor_id){
         ptr = ptr->next;
     }
-    if (ptr == NULL) {
-        return ILLEGAL_PARAMETER;
-    } else {
-        visitor = ptr->visitor;
-        return OK;
+    if (ptr == NULL){
+        return NULL;
+    } else{
+        return ptr->visitor;
     }
 }
 
@@ -509,7 +503,8 @@ static Result find_visitor_by_id(ChallengeRoomSystem *sys, Visitor *visitor,
  *         ILLEGAL_TIME: if the quit_time is not greater or equal than the
  *                       last time known to the system
  *         MEMORY_PROBLEM: if allocation problems have occurred
- *         NOT_IN_ROOM: if the visitor is not in a room
+ *         NOT_IN_ROOM: if the visitor is not in a room or visitor_id is not
+ *                      found in the system
  *         OK: if everything went well
  */
 Result visitor_quit(ChallengeRoomSystem *sys, int visitor_id, int quit_time) {
@@ -520,8 +515,10 @@ Result visitor_quit(ChallengeRoomSystem *sys, int visitor_id, int quit_time) {
     if (quit_time < sys->system_last_known_time) {
         return ILLEGAL_TIME;
     }
-    Visitor *visitor = NULL;
-    find_visitor_by_id(sys, visitor, visitor_id);
+    Visitor *visitor = find_visitor_by_id(sys, visitor_id);
+    if(visitor == NULL){
+        return NOT_IN_ROOM;
+    }
     sys->system_last_known_time = quit_time;
     return visitor_quit_room(visitor, quit_time);
 }
@@ -545,7 +542,7 @@ Result all_visitors_quit(ChallengeRoomSystem *sys, int quit_time) {
         return ILLEGAL_TIME;
     }
 
-    VisitorsList ptr = sys->visitors_list_head->next;
+    VisitorsList ptr = sys->visitors_list_head;
     while (ptr != NULL) {
         Result result = visitor_quit_room(ptr->visitor, quit_time);
         RESULT_STANDARD_CHECK(result);
@@ -582,7 +579,7 @@ Result system_room_of_visitor(ChallengeRoomSystem *sys, char *visitor_name,
         ptr = ptr->next;
     }
     //if we got here it means that the visitor is not in the system
-    return ILLEGAL_PARAMETER;
+    return NOT_IN_ROOM;
 }
 
 /**
@@ -698,4 +695,23 @@ Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name) {
         strcpy(*challenge_name, (sys->system_challenges + max_idx)->name);
     }
     return OK;
+}
+
+//TODO: delete:
+void system_print(ChallengeRoomSystem *sys) {
+    printf("%s\n", sys->system_name);
+    printf("%d\n", sys->system_num_challenges);
+    for (int i = 0; i < sys->system_num_challenges; ++i) {
+        printf("%s %d %d\n", (sys->system_challenges + i)->name,
+               (sys->system_challenges + i)->id, (sys->system_challenges + i)
+                       ->level);
+    }
+    printf("%d\n", sys->system_num_rooms);
+    for (int j = 0; j < sys->system_num_rooms; ++j) {
+        printf("%s ", (sys->system_rooms + j)->name);
+        for (int i = 0; i < (sys->system_rooms+j)->num_of_challenges; ++i) {
+            printf("%d ", ((sys->system_rooms+j)->challenges+i)->challenge->id);
+        }
+        printf("\n");
+    }
 }

@@ -53,5 +53,7 @@ Result best_time_of_system_challenge(ChallengeRoomSystem *sys, char *challenge_n
 
 Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name);
 
+//TODO delete:
+void system_print(ChallengeRoomSystem *sys);
 
 #endif // CHALLENGE_SYSTEM_H_
