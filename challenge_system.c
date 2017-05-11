@@ -300,7 +300,7 @@ static Result system_lowest_best_time(ChallengeRoomSystem *sys,
     for (int i = 0; i < sys->system_num_challenges; ++i) {
         if((sys->system_challenges + i)->best_time != 0){
             if (((sys->system_challenges + i)->best_time < min)) {
-                min = sys->system_challenges->best_time;
+                min = (sys->system_challenges + i)->best_time;
                 min_idx = i;
             } else if ((sys->system_challenges + i)->best_time == min &&
                        strcmp((sys->system_challenges + i)->name,
@@ -317,7 +317,6 @@ static Result system_lowest_best_time(ChallengeRoomSystem *sys,
     strcpy(*challenge_best_time, (sys->system_challenges + min_idx)->name);
     return OK;
 }
-
 
 /**
  * resets any memory and frees any allocated memory from the system.
