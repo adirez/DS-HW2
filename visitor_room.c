@@ -338,7 +338,6 @@ Result visitor_enter_room(ChallengeRoom *room, Visitor *visitor, Level level,
  *         OK: if everything went well
  */
 Result visitor_quit_room(Visitor *visitor, int quit_time) {
-    assert(visitor != NULL);
     if (visitor == NULL) {
         return NULL_PARAMETER;
     }
