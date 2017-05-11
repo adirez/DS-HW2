@@ -54,7 +54,6 @@ int main(int argc, char **argv)
     r=change_challenge_name(sys, 11, "challenge_1111");
 
     r=best_time_of_system_challenge(sys, "challenge_1111", &time);
-
     ASSERT("1.8" , time==0)
 
     char *namep=NULL;
@@ -72,6 +71,7 @@ int main(int argc, char **argv)
     free(room);
 
     r=all_visitors_quit(sys, 17);
+    printf("\nRESULT = %d\n", r);
 
     r=best_time_of_system_challenge(sys, "challenge_1111", &time);
     printf("\ntime = %d\n", time);

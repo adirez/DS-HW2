@@ -12,6 +12,7 @@
 #include "visitor_room.h"
 
 static int find_lex_smallest(ChallengeRoom *room, Level level);
+
 static Result visitor_update_fields(ChallengeRoom *room, Visitor *visitor,
                                     int challenge_idx, int start_time);
 
@@ -67,7 +68,7 @@ Result init_visitor(Visitor *visitor, char *name, int id) {
     if (visitor == NULL || name == NULL) {
         return NULL_PARAMETER;
     }
-    visitor->visitor_name =  malloc(strlen(name) + 1);
+    visitor->visitor_name = malloc(strlen(name) + 1);
     if (visitor->visitor_name == NULL) {
         return MEMORY_PROBLEM;
     }
@@ -182,7 +183,7 @@ Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
     int count = 0;
     for (int i = 0; i < room->num_of_challenges; ++i) {
         //checks the challenge's level & that the room is empty
-        if ( (room->challenges + i)->challenge->level == level
+        if ((room->challenges + i)->challenge->level == level
             && (room->challenges + i)->visitor == NULL) {
             count++;
         }
@@ -280,11 +281,6 @@ static Result visitor_update_fields(ChallengeRoom *room, Visitor *visitor,
                                     int challenge_idx, int start_time) {
     assert(room != NULL && visitor != NULL);
     //updates the room_name field in the visitor
-//    *(visitor->room_name) = malloc(strlen(room->name) + 1);//TODO verify that this is a pointer to a string and not a copy
-//    if (*(visitor->room_name) == NULL) {
-//        return MEMORY_PROBLEM;
-//    }
-//    strcpy(*(visitor->room_name), room->name);
     visitor->room_name = &(room->name);
     //updates the chosen ChallengeActivity in the room
     room->challenges[challenge_idx].visitor = visitor;
@@ -347,7 +343,15 @@ Result visitor_quit_room(Visitor *visitor, int quit_time) {
     //calculates the total time that took the visitor to finish the challenge
     int visitor_total_time = quit_time -
                              (visitor->current_challenge->start_time);
+
     //update the best time in the Challenge
-    return set_best_time_of_challenge
-            (visitor->current_challenge->challenge,visitor_total_time);
+    Result result = set_best_time_of_challenge
+            (visitor->current_challenge->challenge, visitor_total_time);
+    if (result != OK) {
+        return result;
+    }
+    visitor->room_name = NULL;
+    visitor->current_challenge->visitor = NULL;
+    visitor->current_challenge = NULL;
+    return OK;
 }

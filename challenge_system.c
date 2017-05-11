@@ -516,11 +516,16 @@ Result visitor_quit(ChallengeRoomSystem *sys, int visitor_id, int quit_time) {
         return ILLEGAL_TIME;
     }
     Visitor *visitor = find_visitor_by_id(sys, visitor_id);
-    if(visitor == NULL){
+    if(visitor == NULL) {
         return NOT_IN_ROOM;
     }
     sys->system_last_known_time = quit_time;
-    return visitor_quit_room(visitor, quit_time);
+    Result result = visitor_quit_room(visitor, quit_time);
+    if(result != OK){
+        return result;
+    }
+    destroy_visitor_node(sys, visitor);
+    return OK;
 }
 
 /**
@@ -542,10 +547,11 @@ Result all_visitors_quit(ChallengeRoomSystem *sys, int quit_time) {
         return ILLEGAL_TIME;
     }
 
-    VisitorsList ptr = sys->visitors_list_head;
+    VisitorsList ptr = sys->visitors_list_head->next;
     while (ptr != NULL) {
         Result result = visitor_quit_room(ptr->visitor, quit_time);
         RESULT_STANDARD_CHECK(result);
+        ptr = ptr->next;
     }
     sys->system_last_known_time = quit_time;
     return OK;
@@ -695,23 +701,4 @@ Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name) {
         strcpy(*challenge_name, (sys->system_challenges + max_idx)->name);
     }
     return OK;
-}
-
-//TODO: delete:
-void system_print(ChallengeRoomSystem *sys) {
-    printf("%s\n", sys->system_name);
-    printf("%d\n", sys->system_num_challenges);
-    for (int i = 0; i < sys->system_num_challenges; ++i) {
-        printf("%s %d %d\n", (sys->system_challenges + i)->name,
-               (sys->system_challenges + i)->id, (sys->system_challenges + i)
-                       ->level);
-    }
-    printf("%d\n", sys->system_num_rooms);
-    for (int j = 0; j < sys->system_num_rooms; ++j) {
-        printf("%s ", (sys->system_rooms + j)->name);
-        for (int i = 0; i < (sys->system_rooms+j)->num_of_challenges; ++i) {
-            printf("%d ", ((sys->system_rooms+j)->challenges+i)->challenge->id);
-        }
-        printf("\n");
-    }
 }
