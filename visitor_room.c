@@ -259,8 +259,7 @@ Result room_of_visitor(Visitor *visitor, char **room_name) {
 static int find_lex_smallest(ChallengeRoom *room, Level level) {
     assert(room != NULL);
     int challenge_idx = UNDEFINED;
-    int num_challenges = room->num_of_challenges;
-    for (int i = 0; i < num_challenges; ++i) {
+    for (int i = 0; i < room->num_of_challenges; ++i) {
         if ((level == All_Levels ||
              room->challenges[i].challenge->level == level) &&
             room->challenges[i].visitor == NULL) {

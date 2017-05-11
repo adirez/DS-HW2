@@ -286,13 +286,27 @@ Result create_system(char *init_file, ChallengeRoomSystem **sys) {
 static Result system_lowest_best_time(ChallengeRoomSystem *sys,
                                       char **challenge_best_time) {
     assert(sys != NULL);
-    int min_idx = 0, min = sys->system_challenges->best_time;
-    for (int i = 1; i < sys->system_num_challenges; ++i) {
-        if (((sys->system_challenges + i)->best_time < min) &&
-            strcmp((sys->system_challenges + i)->name,
-                   (sys->system_challenges + min_idx)->name) < 0) {
+    int min_idx = 0, min = 0;
+    for (int i = 0; i < sys->system_num_challenges; ++i) {
+        if ((sys->system_challenges + i)->num_visits > 0) {
             min = (sys->system_challenges + i)->best_time;
-            min_idx = i;
+            break;
+        }
+    }
+    if(min == 0){
+        *challenge_best_time = NULL;
+        return OK;
+    }
+    for (int i = 0; i < sys->system_num_challenges; ++i) {
+        if((sys->system_challenges + i)->best_time != 0){
+            if (((sys->system_challenges + i)->best_time < min)) {
+                min = sys->system_challenges->best_time;
+                min_idx = i;
+            } else if ((sys->system_challenges + i)->best_time == min &&
+                       strcmp((sys->system_challenges + i)->name,
+                              (sys->system_challenges + min_idx)->name) < 0) {
+                min_idx = i;
+            }
         }
     }
     *challenge_best_time = malloc(strlen((sys->system_challenges + min_idx)
@@ -337,13 +351,16 @@ Result destroy_system(ChallengeRoomSystem *sys, int destroy_time, char
     Result result = most_popular_challenge(sys, most_popular_challenge_p);
     RESULT_STANDARD_CHECK(result);
     result = all_visitors_quit(sys, destroy_time);
-    RESULT_STANDARD_CHECK(result);
+    //might send bad time for set_best_time_of_challenge and get
+    //ILLEGAL_PARAMETER
+    if (result != OK && result != ILLEGAL_PARAMETER) {
+        return result;
+    }
     free(sys->visitors_list_head);
     result = system_lowest_best_time(sys, challenge_best_time);
     RESULT_STANDARD_CHECK(result);
 
     free_system_rooms_and_previous(sys);
-    free(sys->system_name);
     sys->system_num_rooms = 0;
     sys->system_num_challenges = 0;
     sys->system_last_known_time = 0;
@@ -637,7 +654,6 @@ Result change_system_room_name(ChallengeRoomSystem *sys, char *current_name,
     RESULT_STANDARD_CHECK(result);
     result = change_room_name(sys->system_rooms + room_idx, new_name);
     return result;
-    //TODO check this func again
 }
 
 /**
@@ -706,24 +722,4 @@ Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name) {
         strcpy(*challenge_name, (sys->system_challenges + max_idx)->name);
     }
     return OK;
-}
-
-//TODO: delete:
-void system_print(ChallengeRoomSystem *sys) {
-    printf("%s\n", sys->system_name);
-    printf("%d\n", sys->system_num_challenges);
-    for (int i = 0; i < sys->system_num_challenges; ++i) {
-        printf("%s %d %d\n", (sys->system_challenges + i)->name,
-               (sys->system_challenges + i)->id,
-               (sys->system_challenges + i)->level);
-    }
-    printf("%d\n", sys->system_num_rooms);
-    for (int j = 0; j < sys->system_num_rooms; ++j) {
-        printf("%s ", (sys->system_rooms + j)->name);
-        for (int i = 0; i < (sys->system_rooms + j)->num_of_challenges; ++i) {
-            printf("%d ",
-                   ((sys->system_rooms + j)->challenges + i)->challenge->id);
-        }
-        printf("\n");
-    }
 }
