@@ -356,5 +356,6 @@ Result visitor_quit_room(Visitor *visitor, int quit_time) {
         return result;
     }
     visitor->current_challenge->visitor = NULL;
+    visitor->room_name = NULL;
     return OK;
 }
