@@ -170,8 +170,8 @@ Result reset_room(ChallengeRoom *room) {
  */
 Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
                                     int *places) {
-    assert(room != NULL);
-    if (room == NULL) {
+    assert(room != NULL && places != NULL);
+    if (room == NULL || places == NULL) {
         return NULL_PARAMETER;
     }
     //if the level is All_Levels returns the num of challenges in the room
@@ -231,7 +231,8 @@ Result room_of_visitor(Visitor *visitor, char **room_name) {
     if (room_name == NULL) {
         return NULL_PARAMETER;
     }
-    if (visitor == NULL || visitor->room_name == NULL) {
+    if (visitor == NULL || visitor->room_name == NULL ||
+        visitor->visitor_id == 0) {
         return NOT_IN_ROOM;
     }
     *room_name = malloc(strlen(*(visitor->room_name)) + 1);
