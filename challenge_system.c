@@ -168,7 +168,6 @@ static Result add_challenge_to_room(ChallengeRoomSystem *sys, int challenge_id,
             }
             return OK;
         }
-
     }
     return OK;
 }
@@ -338,8 +337,8 @@ static Result system_lowest_best_time(ChallengeRoomSystem *sys,
  *         MEMORY_PROBLEM: if allocation problems have occurred
  *         OK: if everything went well
  */
-Result destroy_system(ChallengeRoomSystem *sys, int destroy_time, char
-**most_popular_challenge_p, char **challenge_best_time) {
+Result destroy_system(ChallengeRoomSystem *sys, int destroy_time,
+                   char**most_popular_challenge_p, char **challenge_best_time) {
     if (sys == NULL || most_popular_challenge_p == NULL ||
         challenge_best_time == NULL) {
         return NULL_PARAMETER;
@@ -350,8 +349,6 @@ Result destroy_system(ChallengeRoomSystem *sys, int destroy_time, char
     Result result = most_popular_challenge(sys, most_popular_challenge_p);
     RESULT_STANDARD_CHECK(result);
     result = all_visitors_quit(sys, destroy_time);
-    //might send bad time for set_best_time_of_challenge and get
-    //ILLEGAL_PARAMETER
     if (result != OK) {
         return result;
     }
@@ -363,6 +360,7 @@ Result destroy_system(ChallengeRoomSystem *sys, int destroy_time, char
     sys->system_num_rooms = 0;
     sys->system_num_challenges = 0;
     sys->system_last_known_time = 0;
+    free(sys);
     return OK;
 }
 
@@ -431,6 +429,7 @@ static void destroy_visitor_node(ChallengeRoomSystem *sys, Visitor *visitor) {
     }
     VisitorsList tmp_node = ptr->next->next;
     reset_visitor(ptr->next->visitor);
+    free(ptr->next->visitor);
     free(ptr->next);
     ptr->next = tmp_node;
 }
@@ -523,13 +522,11 @@ static Visitor *find_visitor_by_id(ChallengeRoomSystem *sys, int visitor_id) {
  * @return NULL_PARAMETER: if the ptr to sys is NULL
  *         ILLEGAL_TIME: if the quit_time is not greater or equal than the
  *                       last time known to the system
- *         MEMORY_PROBLEM: if allocation problems have occurred
  *         NOT_IN_ROOM: if the visitor is not in a room or visitor_id is not
  *                      found in the system
  *         OK: if everything went well
  */
 Result visitor_quit(ChallengeRoomSystem *sys, int visitor_id, int quit_time) {
-    //TODO might be MEMORY_PROBLEM???
     if (sys == NULL) {
         return NULL_PARAMETER;
     }

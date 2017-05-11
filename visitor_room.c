@@ -92,6 +92,7 @@ Result reset_visitor(Visitor *visitor) {
     if (visitor == NULL) {
         return NULL_PARAMETER;
     }
+    free(visitor->visitor_name);
     visitor->visitor_name = NULL;
     visitor->visitor_id = 0;
     visitor->room_name = NULL;

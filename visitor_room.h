@@ -12,26 +12,26 @@
 struct SChallengeActivity;
 typedef struct SVisitor
 {
-    char *visitor_name;
-    int visitor_id;
-    char **room_name;
-    struct SChallengeActivity *current_challenge;
+  char *visitor_name;
+  int visitor_id;
+  char **room_name;
+  struct SChallengeActivity *current_challenge;
 } Visitor;
 
 
 typedef struct SChallengeActivity
 {
-    Challenge *challenge;
-    Visitor *visitor;
-    int start_time;
+   Challenge *challenge;
+   Visitor *visitor;
+   int start_time;
 } ChallengeActivity;
 
 
 typedef struct SChallengeRoom
 {
-    char *name;
-    int num_of_challenges;
-    ChallengeActivity *challenges;
+   char *name;
+   int num_of_challenges;
+   ChallengeActivity *challenges;
 } ChallengeRoom;
 
 

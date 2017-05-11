@@ -1,6 +1,3 @@
-//
-// Created by adire on 02-May-17.
-//
 #ifndef CHALLENGE_H_
 #define CHALLENGE_H_
 
@@ -8,11 +5,11 @@
 
 typedef struct SChallenge
 {
-    int id;
-    char *name;
-    Level level;
-    int best_time;
-    int num_visits;
+   int id;
+   char *name;
+   Level level;
+   int best_time;
+   int num_visits;
 } Challenge;
 
 Result init_challenge(Challenge *challenge, int id, char *name, Level level);

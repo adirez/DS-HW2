@@ -1,7 +1,3 @@
-//
-// Created by adire on 02-May-17.
-//
-
 #ifndef CHALLENGE_SYSTEM_H_
 #define CHALLENGE_SYSTEM_H_
 
@@ -12,6 +8,7 @@ typedef struct SChallengeRoomSystem
 {
 
 #include "challenge_room_system_fields.h"
+
     char *system_name;
     int system_last_known_time;
     Challenge *system_challenges;
@@ -53,4 +50,6 @@ Result best_time_of_system_challenge(ChallengeRoomSystem *sys, char *challenge_n
 
 Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name);
 
+
 #endif // CHALLENGE_SYSTEM_H_
+
