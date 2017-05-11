@@ -11,6 +11,7 @@
 
 #include "visitor_room.h"
 
+#define UNDEFINED -1
 static int find_lex_smallest(ChallengeRoom *room, Level level);
 
 static Result visitor_update_fields(ChallengeRoom *room, Visitor *visitor,
@@ -174,13 +175,19 @@ Result num_of_free_places_for_level(ChallengeRoom *room, Level level,
     if (room == NULL || places == NULL) {
         return NULL_PARAMETER;
     }
+    int count = 0;
     //if the level is All_Levels returns the num of challenges in the room
     if (level == All_Levels) {
-        *places = room->num_of_challenges;
+        for (int i = 0; i < room->num_of_challenges; ++i) {
+            //checks that the room is empty
+            if ((room->challenges + i)->visitor == NULL) {
+                count++;
+            }
+        }
+        *places = count;
         return OK;
     }
 
-    int count = 0;
     for (int i = 0; i < room->num_of_challenges; ++i) {
         //checks the challenge's level & that the room is empty
         if ((room->challenges + i)->challenge->level == level
@@ -251,14 +258,17 @@ Result room_of_visitor(Visitor *visitor, char **room_name) {
  */
 static int find_lex_smallest(ChallengeRoom *room, Level level) {
     assert(room != NULL);
+    int challenge_idx = UNDEFINED;
+    int num_challenges = room->num_of_challenges;
+    for (int i = 0; i < num_challenges; ++i) {
     int challenge_idx = -1;
     for (int i = 0; i < room->num_of_challenges; ++i) {
         if ((level == All_Levels ||
              room->challenges[i].challenge->level == level) &&
             room->challenges[i].visitor == NULL) {
 
-            if (challenge_idx == -1 ||
-                    strcmp(room->challenges[i].challenge->name,
+            if (challenge_idx == UNDEFINED ||
+                strcmp(room->challenges[i].challenge->name,
                        room->challenges[challenge_idx].challenge->name) < 0) {
 
                 challenge_idx = i;
