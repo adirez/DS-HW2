@@ -25,7 +25,7 @@
 
 /* deceleration for static functions */
 
-static void free_system_name(ChallengeRoomSystem *sys);
+static void free_system_and_name(ChallengeRoomSystem *sys);
 
 static void free_system_challenges_and_previous(ChallengeRoomSystem *sys);
 
@@ -71,14 +71,14 @@ Result create_system(char *init_file, ChallengeRoomSystem **sys) {
     if (init_file == NULL || sys == NULL) {
         return NULL_PARAMETER;
     }
+    FILE *input = fopen(init_file, "r");
+    if (input == NULL) {
+        return NULL_PARAMETER;
+    }
     (*sys) = malloc(sizeof(**sys));
     (*sys)->system_last_known_time = 0;
     (*sys)->system_num_rooms = 0;
     (*sys)->system_num_challenges = 0;
-    FILE *input = fopen(init_file, "r");
-    if (input == NULL) {
-        return MEMORY_PROBLEM; //TODO not sure if that's the right Error
-    }
     Result result = update_system_name(*sys, input);
     CREATE_RESULT_CHECK(result);
     result = create_system_challenges(*sys, input);
@@ -132,10 +132,6 @@ Result destroy_system(ChallengeRoomSystem *sys, int destroy_time,
     RESULT_STANDARD_CHECK(result);
 
     free_system_rooms_and_previous(sys);
-    sys->system_num_rooms = 0;
-    sys->system_num_challenges = 0;
-    sys->system_last_known_time = 0;
-    free(sys);
     return OK;
 }
 
@@ -236,8 +232,8 @@ Result visitor_quit(ChallengeRoomSystem *sys, int visitor_id, int quit_time) {
  * @return NULL_PARAMETER: if the ptr to sys is NULL
  *         ILLEGAL_TIME: if the quit_time is not greater or equal than the
  *                       last time known to the system
- *         MEMORY_PROBLEM: if allocation problems have occurred
- *         NOT_IN_ROOM: if the visitor is not in a room
+ *         NOT_IN_ROOM: if for some reason a visitor is in the system and not
+ *                      in a room
  *         OK: if everything went well
  */
 Result all_visitors_quit(ChallengeRoomSystem *sys, int quit_time) {
@@ -408,8 +404,9 @@ Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name) {
  * free the allocated memory of the system
  * @param sys - ptr to the system
  */
-static void free_system_name(ChallengeRoomSystem *sys) {
+static void free_system_and_name(ChallengeRoomSystem *sys) {
     free(sys->system_name);
+    free(sys);
     return;
 }
 
@@ -420,12 +417,12 @@ static void free_system_name(ChallengeRoomSystem *sys) {
  * @param num_challenges - num of the challenges in the system
  */
 static void free_system_challenges_and_previous(ChallengeRoomSystem *sys) {
-    free_system_name(sys);
     for (int i = 0; i < sys->system_num_challenges; ++i) {
         reset_challenge(sys->system_challenges + i);
     }
     free(sys->system_challenges);
     sys->system_num_challenges = 0;
+    free_system_and_name(sys);
     return;
 }
 
@@ -435,11 +432,13 @@ static void free_system_challenges_and_previous(ChallengeRoomSystem *sys) {
  * @param sys - ptr to system
  */
 static void free_system_rooms_and_previous(ChallengeRoomSystem *sys) {
-    free_system_challenges_and_previous(sys);
     for (int i = 0; i < sys->system_num_rooms; ++i) {
         reset_room(sys->system_rooms + i);
     }
     free(sys->system_rooms);
+    sys->system_num_rooms = 0;
+    sys->system_last_known_time = 0;
+    free_system_challenges_and_previous(sys);
     return;
 }
 
@@ -455,6 +454,7 @@ static Result update_system_name(ChallengeRoomSystem *sys, FILE *input_file) {
     fscanf(input_file, "%s\n", name);
     sys->system_name = malloc(strlen(name) + 1);
     if (sys->system_name == NULL) {
+        free(sys);
         return MEMORY_PROBLEM;
     }
     strcpy(sys->system_name, name);
@@ -475,7 +475,7 @@ static Result create_system_challenges(ChallengeRoomSystem *sys,
     sys->system_challenges = malloc(sys->system_num_challenges *
                                     sizeof(*sys->system_challenges));
     if (sys->system_challenges == NULL) {
-        free_system_name(sys);
+        free_system_and_name(sys);
         return MEMORY_PROBLEM;
     }
 
@@ -629,6 +629,7 @@ static Result system_lowest_best_time(ChallengeRoomSystem *sys,
     strcpy(*challenge_best_time, (sys->system_challenges + min_idx)->name);
     return OK;
 }
+
 /**
  * creates a new node to the visitor list
  * initialize the new visitor

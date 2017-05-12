@@ -12,6 +12,7 @@
 #include "visitor_room.h"
 
 #define UNDEFINED -1
+
 static int find_lex_smallest(ChallengeRoom *room, Level level);
 
 static Result visitor_update_fields(ChallengeRoom *room, Visitor *visitor,
@@ -133,6 +134,11 @@ Result init_room(ChallengeRoom *room, char *name, int num_challenges) {
         room->name = NULL;
         return MEMORY_PROBLEM;
     }
+    for (int i = 0; i < num_challenges; ++i) {
+        (room->challenges + i)->visitor = NULL;
+        (room->challenges + i)->challenge = NULL;
+        (room->challenges + i)->start_time = 0;
+    }
 
     room->num_of_challenges = num_challenges;
     return OK;
@@ -239,7 +245,7 @@ Result room_of_visitor(Visitor *visitor, char **room_name) {
     if (room_name == NULL || visitor == NULL) {
         return NULL_PARAMETER;
     }
-    if (visitor->room_name == NULL || visitor->visitor_id == 0) {
+    if (visitor->room_name == NULL) {
         return NOT_IN_ROOM;
     }
     *room_name = malloc(strlen(*(visitor->room_name)) + 1);

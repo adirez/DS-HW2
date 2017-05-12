@@ -105,7 +105,7 @@ Result set_best_time_of_challenge(Challenge *challenge, int time) {
     } else {
         if (time >= 0 && time <= challenge->best_time) {
             challenge->best_time = time;
-        } else{
+        } else {
             return ILLEGAL_PARAMETER;
         }
     }
@@ -120,8 +120,8 @@ Result set_best_time_of_challenge(Challenge *challenge, int time) {
  *         OK: if everything went well
  */
 Result best_time_of_challenge(Challenge *challenge, int *time) {
-    assert(challenge != NULL);
-    if (challenge == NULL) {
+    assert(challenge != NULL && time != NULL);
+    if (challenge == NULL || time == NULL) {
         return NULL_PARAMETER;
     }
     *time = challenge->best_time;
@@ -151,8 +151,8 @@ Result inc_num_visits(Challenge *challenge) {
  *         OK: if everything went well
  */
 Result num_visits(Challenge *challenge, int *visits) {
-    assert(challenge != NULL);
-    if (challenge == NULL) {
+    assert(challenge != NULL && visits != NULL);
+    if (challenge == NULL || visits == NULL) {
         return NULL_PARAMETER;
     }
     *visits = challenge->num_visits;

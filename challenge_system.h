@@ -7,7 +7,7 @@
 typedef struct SChallengeRoomSystem
 {
 
-#include "challenge_room_system_fields.h"
+//#include "challenge_room_system_fields.h"
 
     char *system_name;
     int system_last_known_time;
