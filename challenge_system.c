@@ -592,7 +592,7 @@ Result system_room_of_visitor(ChallengeRoomSystem *sys, char *visitor_name,
     if (sys == NULL) {
         return NULL_PARAMETER;
     }
-    if (visitor_name == NULL) {
+    if (visitor_name == NULL || room_name == NULL) {
         return ILLEGAL_PARAMETER;
     }
 
