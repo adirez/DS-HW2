@@ -6,7 +6,7 @@ set(CMAKE_C_STANDARD 99)
 SET(GCC_COVERAGE_COMPILE_FLAGS "-Wall -pedantic-errors -Werror -DNDEBUG")
 SET( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}" )
 
-set(SOURCE_FILES challenge_system_banch_tests challenge.c challenge.h constants.h
+set(SOURCE_FILES imashlo.c challenge.c challenge.h constants.h
         challenge_system.c challenge_system.h
         system_additional_types.h visitor_room.c
         visitor_room.h challenge_room_system_fields.h)
