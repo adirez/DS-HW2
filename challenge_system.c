@@ -25,7 +25,7 @@
 
 /* deceleration for static functions */
 
-static void free_system_and_name(ChallengeRoomSystem *sys);
+static void free_system_name(ChallengeRoomSystem *sys);
 
 static void free_system_challenges_and_previous(ChallengeRoomSystem *sys);
 
@@ -132,6 +132,7 @@ Result destroy_system(ChallengeRoomSystem *sys, int destroy_time,
     RESULT_STANDARD_CHECK(result);
 
     free_system_rooms_and_previous(sys);
+    free(sys);
     return OK;
 }
 
@@ -404,9 +405,8 @@ Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name) {
  * free the allocated memory of the system
  * @param sys - ptr to the system
  */
-static void free_system_and_name(ChallengeRoomSystem *sys) {
+static void free_system_name(ChallengeRoomSystem *sys) {
     free(sys->system_name);
-    free(sys);
     return;
 }
 
@@ -422,7 +422,7 @@ static void free_system_challenges_and_previous(ChallengeRoomSystem *sys) {
     }
     free(sys->system_challenges);
     sys->system_num_challenges = 0;
-    free_system_and_name(sys);
+    free_system_name(sys);
     return;
 }
 
@@ -475,7 +475,7 @@ static Result create_system_challenges(ChallengeRoomSystem *sys,
     sys->system_challenges = malloc(sys->system_num_challenges *
                                     sizeof(*sys->system_challenges));
     if (sys->system_challenges == NULL) {
-        free_system_and_name(sys);
+        free_system_name(sys);
         return MEMORY_PROBLEM;
     }
 

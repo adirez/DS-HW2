@@ -4,8 +4,8 @@ Last name :
 ID : 
 Email : 
 -----------------------------------------------
-First name : 
-Last name : 
-ID : 
-Email : 
+First name : Adi
+Last name : Reznik
+ID : 308571546
+Email : adireznik@campus.technion.ac.il
 -----------------------------------------------
