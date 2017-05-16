@@ -66,6 +66,7 @@ static Result find_room_by_name(ChallengeRoomSystem *sys, char *room_name,
  * @return NULL_PARAMETER: if the ptr to sys or init_file are NULL
  *         MEMORY_PROBLEM: if allocation problems have occurred
  *         OK: if everything went well
+ *         ILLEGAL_PARAMETER: if num_challenges is less than 1
  */
 Result create_system(char *init_file, ChallengeRoomSystem **sys) {
     if (init_file == NULL || sys == NULL) {
@@ -573,8 +574,8 @@ static Result rooms_add_challenge_activities(ChallengeRoomSystem *sys,
  */
 static Result create_system_rooms(ChallengeRoomSystem *sys, FILE *input_file) {
     fscanf(input_file, "%d\n", &sys->system_num_rooms);
-    sys->system_rooms = malloc(sys->system_num_rooms * sizeof
-    (*sys->system_rooms));
+    sys->system_rooms = calloc((size_t) sys->system_num_rooms,
+                               sizeof(*sys->system_rooms));
     if (sys->system_rooms == NULL) {
         free_system_challenges_and_previous(sys);
         return NULL_PARAMETER;
