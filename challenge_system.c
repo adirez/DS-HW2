@@ -372,6 +372,10 @@ Result most_popular_challenge(ChallengeRoomSystem *sys, char **challenge_name) {
     if (sys == NULL || challenge_name == NULL) {
         return NULL_PARAMETER;
     }
+    if (sys->system_num_rooms == 0) {
+        *challenge_name = NULL;
+        return OK;
+    }
     int max_idx = 0, max = 0, curr = 0;
     Result result = num_visits(sys->system_challenges, &max);
     RESULT_STANDARD_CHECK(result);
@@ -433,7 +437,9 @@ static void free_system_challenges_and_previous(ChallengeRoomSystem *sys) {
  */
 static void free_system_rooms_and_previous(ChallengeRoomSystem *sys) {
     for (int i = 0; i < sys->system_num_rooms; ++i) {
-        reset_room(sys->system_rooms + i);
+        if ((sys->system_rooms + i) != NULL) {
+            reset_room(sys->system_rooms + i);
+        }
     }
     free(sys->system_rooms);
     sys->system_num_rooms = 0;
@@ -530,6 +536,10 @@ static Result rooms_add_challenge_activities(ChallengeRoomSystem *sys,
     for (int i = 0; i < sys->system_num_rooms; ++i) {
         int num_challenges_in_room = 0;
         fscanf(input_file, "%s %d", room_name, &num_challenges_in_room);
+        if (num_challenges_in_room == 0) {
+            free_system_rooms_and_previous(sys);
+            return ILLEGAL_PARAMETER;
+        }
         Result result = init_room((sys->system_rooms + i), room_name,
                                   num_challenges_in_room);
         if (result != OK) {
